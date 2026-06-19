@@ -4,7 +4,11 @@ const path = require('path');
 
 const router = express.Router();
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
+// Use absolute path for uploads directory to ensure persistence across redeploys
+const DEFAULT_UPLOAD_DIR = path.join(process.env.HOME || process.env.USERPROFILE || '/var/data', 'custom_storage_uploads');
+const UPLOAD_DIR = process.env.UPLOAD_DIR || DEFAULT_UPLOAD_DIR;
+
+console.log(`Public file access serving from: ${UPLOAD_DIR}`);
 
 // GET /public/assets/:filename - Stream files with range request support
 router.get('/:filename', (req, res) => {
