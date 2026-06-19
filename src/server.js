@@ -17,7 +17,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static(process.env.UPLOAD_DIR || 'uploads'));
+const uploadDir = process.env.UPLOAD_DIR || path.join(process.env.HOME || process.env.USERPROFILE || '/var/data', 'custom_storage_uploads');
+app.use('/uploads', express.static(uploadDir));
+console.log(`Serving static files from: ${uploadDir}`);
 
 // Import upload middleware
 const upload = require('./middleware/upload');
