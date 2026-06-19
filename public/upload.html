@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Media - Custom Storage Gateway</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <nav class="bg-gray-800 text-white p-4 shadow-lg">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold"><i class="fas fa-cloud"></i> Media Gateway</h1>
+      <a href="/" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition flex items-center gap-2">
+        <i class="fas fa-th-large"></i> Gallery
+      </a>
+    </div>
+  </nav>
+
+  <main class="container mx-auto p-6 max-w-3xl">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">Upload Media</h2>
+      <p class="text-gray-600 mb-6">Upload images (JPEG, PNG, GIF, WebP, SVG, BMP, TIFF) or videos (MP4, WebM, OGG, MOV, AVI, MKV). Max size: 500MB.</p>
+
+      <!-- Drag & Drop Zone -->
+      <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-500 hover:bg-blue-50 transition cursor-pointer">
+        <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
+        <p class="text-lg text-gray-700 font-medium mb-2">Drag & drop files here</p>
+        <p class="text-sm text-gray-500 mb-4">or click to browse</p>
+        <input type="file" id="file-input" class="hidden" accept="image/*,video/*" multiple>
+        <button onclick="document.getElementById('file-input').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition">
+          Select Files
+        </button>
+      </div>
+
+      <!-- File list -->
+      <div id="file-list" class="mt-6 hidden">
+        <h3 class="font-semibold text-gray-800 mb-3">Selected Files</h3>
+        <ul id="files" class="space-y-2"></ul>
+      </div>
+
+      <!-- Upload progress -->
+      <div id="upload-progress" class="mt-6 hidden">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-medium text-gray-700">Uploading...</span>
+          <span id="progress-percent" class="text-sm text-gray-600">0%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div id="progress-bar" class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <p id="current-file" class="text-sm text-gray-500 mt-2"></p>
+      </div>
+
+      <!-- Upload button -->
+      <div id="upload-actions" class="mt-6 text-right hidden">
+        <button onclick="uploadFiles()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition">
+          <i class="fas fa-upload"></i> Start Upload
+        </button>
+      </div>
+
+      <!-- Success/Error messages -->
+      <div id="message" class="mt-6 p-4 rounded-lg hidden"></div>
+    </div>
+
+    <!-- Recent uploads -->
+    <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Uploads</h3>
+      <div id="recent-uploads" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <p class="text-gray-500 col-span-full">No recent uploads</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const filesInput = document.getElementById('file-input');
+    const dropZone = document.getElementById('drop-zone');
+    const fileListEl = document.getElementById('file-list');
+    const filesContainer = document.getElementById('files');
+    const uploadActions = document.getElementById('upload-actions');
+    const uploadProgress = document.getElementById('upload-progress');
+    const progressBar = document.getElementById('progress-bar');
+    const progressPercent = document.getElementById('progress-percent');
+    const currentFileEl = document.getElementById('current-file');
+    const messageEl = document.getElementById('message');
+    const recentUploadsEl = document.getElementById('recent-uploads');
+
+    let selectedFiles = [];
+    const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+    const ALLOWED_TYPES = ['image/', 'video/'];
+
+    // Drag & drop handlers
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-blue-500', 'bg-blue-50');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+      const files = Array.from(e.dataTransfer.files);
+      handleFiles(files);
+    });
+
+    filesInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      handleFiles(files);
+    });
+
+    function handleFiles(files) {
+      for (const file of files) {
+        // Validate file type
+        const isValidType = ALLOWED_TYPES.some(type => file.type.startsWith(type));
+        if (!isValidType) {
+          alert(`File "${file.name}" is not an allowed image or video type.`);
+          continue;
+        }
+
+        // Validate file size
+        if (file.size > MAX_FILE_SIZE) {
+          alert(`File "${file.name}" exceeds 500MB limit.`);
+          continue;
+        }
+
+        // Check if already added
+        if (selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
+          continue;
+        }
+
+        selectedFiles.push(file);
+      }
+
+      if (selectedFiles.length > 0) {
+        fileListEl.classList.remove('hidden');
+        uploadActions.classList.remove('hidden');
+        renderFileList();
+      }
+    }
+
+    function renderFileList() {
+      filesContainer.innerHTML = '';
+      selectedFiles.forEach((file, index) => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+        li.innerHTML = `
+          <div class="flex items-center gap-3">
+            <i class="fas ${file.type.startsWith('image/') ? 'fa-image' : 'fa-video'} text-blue-600"></i>
+            <div>
+              <p class="font-medium text-gray-800">${file.name}</p>
+              <p class="text-sm text-gray-500">${formatBytes(file.size)}</p>
+            </div>
+          </div>
+          <button onclick="removeFile(${index})" class="text-red-500 hover:text-red-700">
+            <i class="fas fa-times"></i>
+          </button>
+        `;
+        filesContainer.appendChild(li);
+      });
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      if (selectedFiles.length === 0) {
+        fileListEl.classList.add('hidden');
+        uploadActions.classList.add('hidden');
+      }
+      renderFileList();
+    }
+
+    async function uploadFiles() {
+      if (selectedFiles.length === 0) return;
+
+      uploadActions.classList.add('hidden');
+      uploadProgress.classList.remove('hidden');
+      recentUploadsEl.innerHTML = '<p class="text-gray-500 col-span-full">Uploading...</p>';
+
+      const formData = new FormData();
+      // Only upload the first file (our backend currently only supports single file upload)
+      formData.append('file', selectedFiles[0]);
+
+      try {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            progressBar.style.width = percent + '%';
+            progressPercent.textContent = percent + '%';
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            showMessage('Upload completed successfully!', 'success');
+            selectedFiles = [];
+            fileListEl.classList.add('hidden');
+            uploadProgress.classList.add('hidden');
+            progressBar.style.width = '0%';
+            loadRecentUploads();
+          } else {
+            const error = JSON.parse(xhr.responseText);
+            throw new Error(error.error || 'Upload failed');
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          throw new Error('Network error');
+        });
+
+        xhr.open('POST', '/api/assets/upload');
+        xhr.send(formData);
+      } catch (error) {
+        console.error('Upload error:', error);
+        showMessage(`Upload failed: ${error.message}`, 'error');
+        uploadActions.classList.remove('hidden');
+        uploadProgress.classList.add('hidden');
+      }
+    }
+
+    function showMessage(text, type) {
+      messageEl.textContent = text;
+      messageEl.className = `mt-6 p-4 rounded-lg ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+      messageEl.classList.remove('hidden');
+      setTimeout(() => messageEl.classList.add('hidden'), 5000);
+    }
+
+    async function loadRecentUploads() {
+      try {
+        const response = await fetch('/api/assets?limit=6');
+        const result = await response.json();
+        if (result.success && result.data.length > 0) {
+          recentUploadsEl.innerHTML = '';
+          result.data.forEach(asset => {
+            const isImg = asset.mimeType.startsWith('image/');
+            const card = document.createElement('div');
+            card.className = 'border rounded-lg overflow-hidden hover:shadow-md transition';
+            card.innerHTML = `
+              <div class="relative">
+                <a href="${asset.publicUrl}" target="_blank">
+                  ${isImg
+                    ? `<img src="${asset.publicUrl}" alt="${asset.originalFilename}" class="w-full h-32 object-cover">`
+                    : `<video src="${asset.publicUrl}" class="w-full h-32 object-cover" muted></video>`
+                  }
+                </a>
+              </div>
+              <div class="p-3">
+                <p class="text-sm font-medium text-gray-800 truncate">${asset.originalFilename}</p>
+                <p class="text-xs text-gray-500">${formatBytes(asset.fileSize)}</p>
+              </div>
+            `;
+            recentUploadsEl.appendChild(card);
+          });
+        } else {
+          recentUploadsEl.innerHTML = '<p class="text-gray-500 col-span-full">No uploads yet</p>';
+        }
+      } catch (error) {
+        console.error('Failed to load recent uploads:', error);
+      }
+    }
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Initial load
+    loadRecentUploads();
+  </script>
+</body>
+</html>
