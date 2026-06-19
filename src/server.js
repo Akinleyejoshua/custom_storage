@@ -38,6 +38,10 @@ app.get('/upload', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/upload.html'));
 });
 
+app.get('/docs', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/docs.html'));
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
