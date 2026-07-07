@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Documentation - Custom Storage Gateway</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <script>hljs.highlightAll();</script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <nav class="bg-gray-800 text-white p-4 shadow-lg">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold"><i class="fas fa-cloud"></i> Media Gateway</h1>
+      <div class="flex gap-4">
+        <a href="/" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition flex items-center gap-2">
+          <i class="fas fa-th-large"></i> Gallery
+        </a>
+        <a href="/upload" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition flex items-center gap-2">
+          <i class="fas fa-upload"></i> Upload
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container mx-auto p-6 max-w-6xl">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+      <h1 class="text-3xl font-bold text-gray-800 mb-6">API Documentation</h1>
+      <p class="text-gray-600 mb-8">Custom Cloud Storage Gateway for media assets (images and videos).</p>
+
+      <div class="flex border-b border-gray-200 mb-8">
+        <button onclick="showSection('overview')" class="tab-btn active px-4 py-2 text-blue-600 border-b-2 border-blue-600" data-section="overview">Overview</button>
+        <button onclick="showSection('endpoints')" class="tab-btn px-4 py-2 text-gray-600 hover:text-blue-600" data-section="endpoints">Endpoints</button>
+        <button onclick="showSection('mime-types')" class="tab-btn px-4 py-2 text-gray-600 hover:text-blue-600" data-section="mime-types">MIME Types</button>
+        <button onclick="showSection('examples')" class="tab-btn px-4 py-2 text-gray-600 hover:text-blue-600" data-section="examples">Examples</button>
+      </div>
+
+      <!-- Overview Section -->
+      <section id="overview" class="tab-content">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Overview</h2>
+        <p class="mb-4">This API provides a cloud storage gateway for media assets (images and videos) with streaming support for efficient delivery.</p>
+        
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+          <h3 class="font-bold text-blue-800 mb-2">Base URL</h3>
+          <code id="base-url" class="bg-gray-100 px-2 py-1 rounded"></code>
+        </div>
+        
+        <h3 class="text-xl font-semibold text-gray-800 mb-3">Authentication</h3>
+        <p class="mb-4">This API currently does not require authentication.</p>
+        
+        <h3 class="text-xl font-semibold text-gray-800 mb-3">Error Responses</h3>
+        <p class="mb-4">All errors return JSON with the following structure:</p>
+        <pre class="bg-gray-100 p-4 rounded-lg mb-4"><code class="language-json">{
+  "error": "Error message",
+  "details": "Optional additional details"
+}</code></pre>
+      </section>
+
+      <!-- Endpoints Section -->
+      <section id="endpoints" class="tab-content hidden">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Endpoints</h2>
+        
+        <div class="space-y-8">
+          <!-- Upload Asset -->
+          <div class="endpoint">
+            <h3 class="text-xl font-semibold text-blue-600 mb-2">1. Upload Asset</h3>
+            <p class="mb-2">Upload a media file (image or video).</p>
+            
+            <div class="bg-gray-100 p-3 rounded mb-3">
+              <code class="text-sm"><span class="text-green-600">POST</span> /api/assets/upload</code>
+            </div>
+            
+            <h4 class="font-semibold mb-2">Content-Type:</h4>
+            <p class="mb-3"><code>multipart/form-data</code></p>
+            
+            <h4 class="font-semibold mb-2">Parameters:</h4>
+            <div class="overflow-x-auto mb-4">
+              <table class="min-w-full border border-gray-200">
+                <thead>
+                  <tr class="bg-gray-50">
+                    <th class="px-4 py-2 text-left border-b">Field</th>
+                    <th class="px-4 py-2 text-left border-b">Type</th>
+                    <th class="px-4 py-2 text-left border-b">Required</th>
+                    <th class="px-4 py-2 text-left border-b">Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="px-4 py-2 border-b"><code>file</code></td>
+                    <td class="px-4 py-2 border-b">file</td>
+                    <td class="px-4 py-2 border-b">Yes</td>
+                    <td class="px-4 py-2 border-b">The media file to upload</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <h4 class="font-semibold mb-2">Request Example:</h4>
+            <pre class="bg-gray-100 p-4 rounded-lg mb-4"><code class="language-bash">curl -X POST -F "file=@/path/to/your/file.jpg" <span class="dynamic-base-url"></span>/api/assets/upload</code></pre>
+            
+            <h4 class="font-semibold mb-2">Success Response (201 Created):</h4>
+            <pre class="bg-gray-100 p-4 rounded-lg mb-4"><code class="language-json">{
+  "success": true,
+  "data": {
+    "_id": "60d5ec9f8b3a8b0015d4a7e1",
+    "assetId": "a1b2c3d4e5f6",
+    "originalFilename": "my-image.jpg",
+    "secureFilename": "1624567890-abcdef123456.jpg",
+    "mimeType": "image/jpeg",
+    "fileSize": 1024567,
+    "publicUrl": "http://localhost:4000/public/assets/1624567890-abcdef123456.jpg",
+    "createdAt": "2023-06-24T12:34:56.789Z",
+    "updatedAt": "2023-06-24T12:34:56.789Z"
+  }
+}</code></pre>
+          </div>
+          
+          <!-- List Assets -->
+          <div class="endpoint">
+            <h3 class="text-xl font-semibold text-blue-600 mb-2">2. List Assets</h3>
+            <p class="mb-2">Get a paginated list of all uploaded assets.</p>
+            
+            <div class="bg-gray-100 p-3 rounded mb-3">
+              <code class="text-sm"><span class="text-green-600">GET</span> /api/assets</code>
+            </div>
+            
+            <h4 class="font-semibold mb-2">Query Parameters:</h4>
+            <div class="overflow-x-auto mb-4">
+              <table class="min-w-full border border-gray-200">
+                <thead>
+                  <tr class="bg-gray-50">
+                    <th class="px-4 py-2 text-left border-b">Parameter</th>
+                    <th class="px-4 py-2 text-left border-b">Type</th>
+                    <th class="px-4 py-2 text-left border-b">Default</th>
+                    <th class="px-4 py-2 text-left border-b">Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="px-4 py-2 border-b"><code>page</code></td>
+                    <td class="px-4 py-2 border-b">number</td>
+                    <td class="px-4 py-2 border-b">1</td>
+                    <td class="px-4 py-2 border-b">Page number</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-2 border-b"><code>limit</code></td>
+                    <td class="px-4 py-2 border-b">number</td>
+                    <td class="px-4 py-2 border-b">20</td>
+                    <td class="px-4 py-2 border-b">Items per page</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <h4 class="font-semibold mb-2">Request Example:</h4>
+            <pre class="bg-gray-100 p-4 rounded-lg mb-4"><code class="language-bash">curl "<span class="dynamic-base-url"></span>/api/assets?page=1&limit=10"</code></pre>
+          </div>
+        </div>
+      </section>
+      
+      <!-- MIME Types Section -->
+      <section id="mime-types" class="tab-content hidden">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Supported MIME Types</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-3">Images</h3>
+            <ul class="space-y-2">
+              <li><code>image/jpeg</code> (.jpg, .jpeg)</li>
+              <li><code>image/png</code> (.png)</li>
+              <li><code>image/gif</code> (.gif)</li>
+              <li><code>image/webp</code> (.webp)</li>
+              <li><code>image/svg+xml</code> (.svg)</li>
+              <li><code>image/bmp</code> (.bmp)</li>
+              <li><code>image/tiff</code> (.tiff)</li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-3">Videos</h3>
+            <ul class="space-y-2">
+              <li><code>video/mp4</code> (.mp4)</li>
+              <li><code>video/webm</code> (.webm)</li>
+              <li><code>video/ogg</code> (.ogg)</li>
+              <li><code>video/quicktime</code> (.mov)</li>
+              <li><code>video/x-msvideo</code> (.avi)</li>
+              <li><code>video/x-matroska</code> (.mkv)</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4">
+          <h3 class="font-bold text-blue-800 mb-2">File Size Limits</h3>
+          <p>Default: 500MB (configurable via <code>MAX_FILE_SIZE</code> environment variable)</p>
+        </div>
+      </section>
+      
+      <!-- Examples Section -->
+      <section id="examples" class="tab-content hidden">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Examples</h2>
+        
+        <div class="space-y-6">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">1. Uploading a file with cURL</h3>
+            <pre class="bg-gray-100 p-4 rounded-lg"><code class="language-bash">curl -X POST -F "file=@/path/to/your/image.jpg" http://localhost:4000/api/assets/upload</code></pre>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">2. Listing assets with pagination</h3>
+            <pre class="bg-gray-100 p-4 rounded-lg"><code class="language-bash">curl "<span class="dynamic-base-url"></span>/api/assets?page=1&limit=10"</code></pre>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">3. Getting a specific asset</h3>
+            <pre class="bg-gray-100 p-4 rounded-lg"><code class="language-bash">curl <span class="dynamic-base-url"></span>/api/assets/a1b2c3d4e5f6</code></pre>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">4. Deleting an asset</h3>
+            <pre class="bg-gray-100 p-4 rounded-lg"><code class="language-bash">curl -X DELETE <span class="dynamic-base-url"></span>/api/assets/a1b2c3d4e5f6</code></pre>
+          </div>
+          
+          <div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">5. Streaming a video with range support</h3>
+            <pre class="bg-gray-100 p-4 rounded-lg"><code class="language-bash">curl -v -H "Range: bytes=0-1023" <span class="dynamic-base-url"></span>/public/assets/1624567890-abcdef123456.mp4</code></pre>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    function showSection(sectionId) {
+      // Hide all sections
+      document.querySelectorAll('.tab-content').forEach(section => {
+        section.classList.add('hidden');
+      });
+      
+      // Show selected section
+      document.getElementById(sectionId).classList.remove('hidden');
+      
+      // Update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
+        btn.classList.add('text-gray-600', 'hover:text-blue-600');
+      });
+      
+      // Activate selected tab
+      const activeBtn = document.querySelector(`.tab-btn[data-section="${sectionId}"]`);
+      activeBtn.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
+      activeBtn.classList.remove('text-gray-600', 'hover:text-blue-600');
+    }
+    
+    // Update all dynamic base URLs
+    document.addEventListener('DOMContentLoaded', function() {
+      const baseUrl = window.location.origin;
+      document.getElementById('base-url').textContent = baseUrl;
+      document.querySelectorAll('.dynamic-base-url').forEach(el => {
+        el.textContent = baseUrl;
+      });
+    });
+  </script>
+</body>
+</html>
