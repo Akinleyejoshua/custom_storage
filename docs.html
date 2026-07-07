@@ -1,266 +1,501 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Documentation - Custom Storage Gateway</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
-  <script>hljs.highlightAll();</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - Custom Gateway</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Bricolage Grotesque"', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff',
+                            100: '#e0ebff',
+                            500: '#4169e1', // Royal Blue
+                            600: '#3a5ec9',
+                            700: '#2f4eb3',
+                            900: '#1b2f7a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #000000;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(65, 105, 225, 0.12) 0, transparent 50%), 
+                radial-gradient(at 100% 100%, rgba(65, 105, 225, 0.08) 0, transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-  <nav class="bg-gray-800 text-white p-4 shadow-lg">
-    <div class="container mx-auto flex justify-between items-center">
-      <h1 class="text-2xl font-bold"><i class="fas fa-cloud"></i> Media Gateway</h1>
-      <div class="flex gap-4">
-        <a href="/" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition flex items-center gap-2">
-          <i class="fas fa-th-large"></i> Gallery
-        </a>
-        <a href="/upload" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition flex items-center gap-2">
-          <i class="fas fa-upload"></i> Upload
-        </a>
-      </div>
-    </div>
-  </nav>
+<body class="text-gray-100 min-h-screen font-sans">
 
-  <main class="container mx-auto p-6 max-w-6xl">
-    <div class="bg-white rounded-lg shadow-lg p-8">
-      <h1 class="text-3xl font-bold text-gray-800 mb-6">API Documentation</h1>
-      <p class="text-gray-600 mb-8">Custom Cloud Storage Gateway for media assets (images and videos).</p>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Navigation Header -->
+        <header class="flex justify-between items-center mb-10">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-brand-500/10 border border-brand-500/20 rounded-xl">
+                    <svg class="w-6 h-6 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+                <span class="text-lg font-bold text-gray-200">Custom Gateway</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <a href="/" class="px-4 py-2 bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-300 hover:text-white rounded-xl text-sm font-semibold transition">
+                    ← Back to Dashboard
+                </a>
+            </div>
+        </header>
 
-      <div class="flex border-b border-gray-200 mb-8">
-        <button onclick="showSection('overview')" class="tab-btn active px-4 py-2 text-blue-600 border-b-2 border-blue-600" data-section="overview">Overview</button>
-        <button onclick="showSection('endpoints')" class="tab-btn px-4 py-2 text-gray-600 hover:text-blue-600" data-section="endpoints">Endpoints</button>
-        <button onclick="showSection('mime-types')" class="tab-btn px-4 py-2 text-gray-600 hover:text-blue-600" data-section="mime-types">MIME Types</button>
-        <button onclick="showSection('examples')" class="tab-btn px-4 py-2 text-gray-600 hover:text-blue-600" data-section="examples">Examples</button>
-      </div>
-
-      <!-- Overview Section -->
-      <section id="overview" class="tab-content">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Overview</h2>
-        <p class="mb-4">This API provides a cloud storage gateway for media assets (images and videos) with streaming support for efficient delivery.</p>
-        
-        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-          <h3 class="font-bold text-blue-800 mb-2">Base URL</h3>
-          <code id="base-url" class="bg-gray-100 px-2 py-1 rounded"></code>
+        <div class="mb-10">
+            <h2 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-gray-100 to-gray-400 bg-clip-text text-transparent">API Documentation</h2>
+            <p class="mt-2 text-gray-400">RESTful API endpoints for managing files, documents, and media securely.</p>
         </div>
-        
-        <h3 class="text-xl font-semibold text-gray-800 mb-3">Authentication</h3>
-        <p class="mb-4">This API currently does not require authentication.</p>
-        
-        <h3 class="text-xl font-semibold text-gray-800 mb-3">Error Responses</h3>
-        <p class="mb-4">All errors return JSON with the following structure:</p>
-        <pre class="bg-gray-100 p-4 rounded-lg mb-4"><code class="language-json">{
-  "error": "Error message",
-  "details": "Optional additional details"
-}</code></pre>
-      </section>
 
-      <!-- Endpoints Section -->
-      <section id="endpoints" class="tab-content hidden">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Endpoints</h2>
+        <!-- Base URL -->
+        <div class="glass-panel rounded-2xl border border-gray-800/80 p-5 mb-8">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Base Endpoint URL</h3>
+            <div class="flex items-center space-x-3 bg-gray-950 px-4 py-3 rounded-xl border border-gray-900 font-mono text-sm text-brand-400">
+                <span id="baseUrl">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Auth Requirements -->
+        <div class="glass-panel rounded-2xl border border-gray-800/80 p-6 mb-8 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-amber-500 rounded-full blur-[80px] opacity-20"></div>
+            <h3 class="text-lg font-bold text-gray-200 mb-3 flex items-center space-x-2">
+                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                <span>Authentication Required</span>
+            </h3>
+            <p class="text-sm text-gray-400 mb-4">
+                To list, upload, or delete assets, your HTTP client must send one of the following authentication headers.
+            </p>
+            <div class="space-y-3">
+                <div class="bg-gray-950 p-4 rounded-xl border border-gray-900 font-mono text-xs">
+                    <p class="text-brand-400"><span class="text-gray-500"># Option A (Standard Bearer Auth - Raw or Base64 encoded email)</span></p>
+                    <p class="text-gray-300">Authorization: Bearer <span class="text-purple-400">your-email@domain.com</span></p>
+                </div>
+                <div class="bg-gray-950 p-4 rounded-xl border border-gray-900 font-mono text-xs">
+                    <p class="text-brand-400"><span class="text-gray-500"># Option B (Custom Workspace Header)</span></p>
+                    <p class="text-gray-300">X-User-Email: <span class="text-purple-400">your-email@domain.com</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Endpoints List -->
         
-        <div class="space-y-8">
-          <!-- Upload Asset -->
-          <div class="endpoint">
-            <h3 class="text-xl font-semibold text-blue-600 mb-2">1. Upload Asset</h3>
-            <p class="mb-2">Upload a media file (image or video).</p>
-            
-            <div class="bg-gray-100 p-3 rounded mb-3">
-              <code class="text-sm"><span class="text-green-600">POST</span> /api/assets/upload</code>
+        <!-- Auth Login -->
+        <div class="glass-panel rounded-2xl border border-gray-800/80 mb-6 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-bold px-3 py-1.5 rounded-lg">POST</span>
+                        <h3 class="text-lg font-bold text-gray-200">/api/auth/login</h3>
+                    </div>
+                    <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Validate Workspace Session</span>
+                </div>
             </div>
-            
-            <h4 class="font-semibold mb-2">Content-Type:</h4>
-            <p class="mb-3"><code>multipart/form-data</code></p>
-            
-            <h4 class="font-semibold mb-2">Parameters:</h4>
-            <div class="overflow-x-auto mb-4">
-              <table class="min-w-full border border-gray-200">
-                <thead>
-                  <tr class="bg-gray-50">
-                    <th class="px-4 py-2 text-left border-b">Field</th>
-                    <th class="px-4 py-2 text-left border-b">Type</th>
-                    <th class="px-4 py-2 text-left border-b">Required</th>
-                    <th class="px-4 py-2 text-left border-b">Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="px-4 py-2 border-b"><code>file</code></td>
-                    <td class="px-4 py-2 border-b">file</td>
-                    <td class="px-4 py-2 border-b">Yes</td>
-                    <td class="px-4 py-2 border-b">The media file to upload</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Registers or verifies an active workspace session for a user email address.</p>
+                
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Request Payload (JSON)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "email": "user@example.com"
+}</pre>
+
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Success Response (200)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "success": true,
+  "message": "Login successful",
+  "email": "user@example.com"
+}</pre>
             </div>
-            
-            <h4 class="font-semibold mb-2">Request Example:</h4>
-            <pre class="bg-gray-100 p-4 rounded-lg mb-4"><code class="language-bash">curl -X POST -F "file=@/path/to/your/file.jpg" <span class="dynamic-base-url"></span>/api/assets/upload</code></pre>
-            
-            <h4 class="font-semibold mb-2">Success Response (201 Created):</h4>
-            <pre class="bg-gray-100 p-4 rounded-lg mb-4"><code class="language-json">{
+        </div>
+
+        <!-- Upload Endpoint -->
+        <div class="glass-panel rounded-2xl border border-gray-800/80 mb-6 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-lg">POST</span>
+                        <h3 class="text-lg font-bold text-gray-200">/api/assets</h3>
+                    </div>
+                    <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Upload Documents & Media</span>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Upload images, videos, documents (PDF, Excel, Word, Text), PowerPoint, audio, or archive files to the gateway. Supports multipart/form-data encoding.</p>
+                
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Form Parameters</h4>
+                <table class="w-full text-sm text-left">
+                    <thead>
+                        <tr class="border-b border-gray-850 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                            <th class="py-2.5">Field</th>
+                            <th class="py-2.5">Type</th>
+                            <th class="py-2.5">Required</th>
+                            <th class="py-2.5">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-900 text-gray-300">
+                        <tr>
+                            <td class="py-3 font-mono text-xs text-brand-400">file</td>
+                            <td class="py-3 text-xs">File Binary</td>
+                            <td class="py-3 text-xs text-red-500">Yes</td>
+                            <td class="py-3 text-xs">The file to upload (Max 500MB)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Success Response (200)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
   "success": true,
   "data": {
-    "_id": "60d5ec9f8b3a8b0015d4a7e1",
-    "assetId": "a1b2c3d4e5f6",
-    "originalFilename": "my-image.jpg",
-    "secureFilename": "1624567890-abcdef123456.jpg",
-    "mimeType": "image/jpeg",
-    "fileSize": 1024567,
-    "publicUrl": "http://localhost:4000/public/assets/1624567890-abcdef123456.jpg",
-    "createdAt": "2023-06-24T12:34:56.789Z",
-    "updatedAt": "2023-06-24T12:34:56.789Z"
+    "assetId": "48b17b2bca6937bc38abda8c9735d1f1",
+    "originalFilename": "invoice_Q2.xlsx",
+    "secureFilename": "1625123456-e91b5c46.xlsx",
+    "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "fileSize": 1048576,
+    "storagePath": "1625123456-e91b5c46.xlsx",
+    "publicUrl": "http://localhost/uploads/1625123456-e91b5c46.xlsx",
+    "user_email": "user@example.com",
+    "createdAt": "2026-06-19 18:30:00"
   }
-}</code></pre>
-          </div>
-          
-          <!-- List Assets -->
-          <div class="endpoint">
-            <h3 class="text-xl font-semibold text-blue-600 mb-2">2. List Assets</h3>
-            <p class="mb-2">Get a paginated list of all uploaded assets.</p>
-            
-            <div class="bg-gray-100 p-3 rounded mb-3">
-              <code class="text-sm"><span class="text-green-600">GET</span> /api/assets</code>
+}</pre>
             </div>
-            
-            <h4 class="font-semibold mb-2">Query Parameters:</h4>
-            <div class="overflow-x-auto mb-4">
-              <table class="min-w-full border border-gray-200">
-                <thead>
-                  <tr class="bg-gray-50">
-                    <th class="px-4 py-2 text-left border-b">Parameter</th>
-                    <th class="px-4 py-2 text-left border-b">Type</th>
-                    <th class="px-4 py-2 text-left border-b">Default</th>
-                    <th class="px-4 py-2 text-left border-b">Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="px-4 py-2 border-b"><code>page</code></td>
-                    <td class="px-4 py-2 border-b">number</td>
-                    <td class="px-4 py-2 border-b">1</td>
-                    <td class="px-4 py-2 border-b">Page number</td>
-                  </tr>
-                  <tr>
-                    <td class="px-4 py-2 border-b"><code>limit</code></td>
-                    <td class="px-4 py-2 border-b">number</td>
-                    <td class="px-4 py-2 border-b">20</td>
-                    <td class="px-4 py-2 border-b">Items per page</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            
-            <h4 class="font-semibold mb-2">Request Example:</h4>
-            <pre class="bg-gray-100 p-4 rounded-lg mb-4"><code class="language-bash">curl "<span class="dynamic-base-url"></span>/api/assets?page=1&limit=10"</code></pre>
-          </div>
         </div>
-      </section>
-      
-      <!-- MIME Types Section -->
-      <section id="mime-types" class="tab-content hidden">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Supported MIME Types</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-3">Images</h3>
-            <ul class="space-y-2">
-              <li><code>image/jpeg</code> (.jpg, .jpeg)</li>
-              <li><code>image/png</code> (.png)</li>
-              <li><code>image/gif</code> (.gif)</li>
-              <li><code>image/webp</code> (.webp)</li>
-              <li><code>image/svg+xml</code> (.svg)</li>
-              <li><code>image/bmp</code> (.bmp)</li>
-              <li><code>image/tiff</code> (.tiff)</li>
-            </ul>
-          </div>
-          
-          <div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-3">Videos</h3>
-            <ul class="space-y-2">
-              <li><code>video/mp4</code> (.mp4)</li>
-              <li><code>video/webm</code> (.webm)</li>
-              <li><code>video/ogg</code> (.ogg)</li>
-              <li><code>video/quicktime</code> (.mov)</li>
-              <li><code>video/x-msvideo</code> (.avi)</li>
-              <li><code>video/x-matroska</code> (.mkv)</li>
-            </ul>
-          </div>
-        </div>
-        
-        <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4">
-          <h3 class="font-bold text-blue-800 mb-2">File Size Limits</h3>
-          <p>Default: 500MB (configurable via <code>MAX_FILE_SIZE</code> environment variable)</p>
-        </div>
-      </section>
-      
-      <!-- Examples Section -->
-      <section id="examples" class="tab-content hidden">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Examples</h2>
-        
-        <div class="space-y-6">
-          <div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">1. Uploading a file with cURL</h3>
-            <pre class="bg-gray-100 p-4 rounded-lg"><code class="language-bash">curl -X POST -F "file=@/path/to/your/image.jpg" http://localhost:4000/api/assets/upload</code></pre>
-          </div>
-          
-          <div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">2. Listing assets with pagination</h3>
-            <pre class="bg-gray-100 p-4 rounded-lg"><code class="language-bash">curl "<span class="dynamic-base-url"></span>/api/assets?page=1&limit=10"</code></pre>
-          </div>
-          
-          <div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">3. Getting a specific asset</h3>
-            <pre class="bg-gray-100 p-4 rounded-lg"><code class="language-bash">curl <span class="dynamic-base-url"></span>/api/assets/a1b2c3d4e5f6</code></pre>
-          </div>
-          
-          <div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">4. Deleting an asset</h3>
-            <pre class="bg-gray-100 p-4 rounded-lg"><code class="language-bash">curl -X DELETE <span class="dynamic-base-url"></span>/api/assets/a1b2c3d4e5f6</code></pre>
-          </div>
-          
-          <div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-2">5. Streaming a video with range support</h3>
-            <pre class="bg-gray-100 p-4 rounded-lg"><code class="language-bash">curl -v -H "Range: bytes=0-1023" <span class="dynamic-base-url"></span>/public/assets/1624567890-abcdef123456.mp4</code></pre>
-          </div>
-        </div>
-      </section>
-    </div>
-  </main>
 
-  <script>
-    function showSection(sectionId) {
-      // Hide all sections
-      document.querySelectorAll('.tab-content').forEach(section => {
-        section.classList.add('hidden');
-      });
-      
-      // Show selected section
-      document.getElementById(sectionId).classList.remove('hidden');
-      
-      // Update tab buttons
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
-        btn.classList.add('text-gray-600', 'hover:text-blue-600');
-      });
-      
-      // Activate selected tab
-      const activeBtn = document.querySelector(`.tab-btn[data-section="${sectionId}"]`);
-      activeBtn.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
-      activeBtn.classList.remove('text-gray-600', 'hover:text-blue-600');
+        <!-- List Assets Endpoint -->
+        <div class="glass-panel rounded-2xl border border-gray-800/80 mb-6 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold px-3 py-1.5 rounded-lg">GET</span>
+                        <h3 class="text-lg font-bold text-gray-200">/api/assets</h3>
+                    </div>
+                    <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">List Personal Files</span>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Retrieve a paginated list of all uploaded assets belonging to the authenticated workspace email, sorted by creation date (newest first).</p>
+                
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Query Parameters</h4>
+                <table class="w-full text-sm text-left">
+                    <thead>
+                        <tr class="border-b border-gray-850 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                            <th class="py-2.5">Parameter</th>
+                            <th class="py-2.5">Type</th>
+                            <th class="py-2.5">Default</th>
+                            <th class="py-2.5">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-900 text-gray-300">
+                        <tr>
+                            <td class="py-3 font-mono text-xs text-brand-400">page</td>
+                            <td class="py-3 text-xs">Integer</td>
+                            <td class="py-3 text-xs">1</td>
+                            <td class="py-3 text-xs">Page number to view</td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 font-mono text-xs text-brand-400">limit</td>
+                            <td class="py-3 text-xs">Integer</td>
+                            <td class="py-3 text-xs">20</td>
+                            <td class="py-3 text-xs">Number of results per page</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Success Response (200)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "success": true,
+  "data": [
+    {
+      "assetId": "48b17b2bca6937bc38abda8c9735d1f1",
+      "originalFilename": "invoice_Q2.xlsx",
+      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "fileSize": 1048576,
+      "publicUrl": "http://localhost/uploads/1625123456-e91b5c46.xlsx",
+      "user_email": "user@example.com",
+      "createdAt": "2026-06-19 18:30:00"
     }
-    
-    // Update all dynamic base URLs
-    document.addEventListener('DOMContentLoaded', function() {
-      const baseUrl = window.location.origin;
-      document.getElementById('base-url').textContent = baseUrl;
-      document.querySelectorAll('.dynamic-base-url').forEach(el => {
-        el.textContent = baseUrl;
-      });
-    });
-  </script>
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "pages": 1
+  }
+}</pre>
+            </div>
+        </div>
+
+        <!-- Get Single Asset -->
+        <div class="glass-panel rounded-2xl border border-gray-800/80 mb-6 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold px-3 py-1.5 rounded-lg">GET</span>
+                        <h3 class="text-lg font-bold text-gray-200">/api/assets/{assetId}</h3>
+                    </div>
+                    <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Retrieve File Metadata</span>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Fetch metadata details for a specific file by its UUID or assetId. Requires authorization ownership.</p>
+                
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Success Response (200)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "success": true,
+  "data": {
+    "assetId": "48b17b2bca6937bc38abda8c9735d1f1",
+    "originalFilename": "invoice_Q2.xlsx",
+    "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "fileSize": 1048576,
+    "publicUrl": "http://localhost/uploads/1625123456-e91b5c46.xlsx",
+    "user_email": "user@example.com",
+    "createdAt": "2026-06-19 18:30:00"
+  }
+}</pre>
+            </div>
+        </div>
+
+        <!-- Delete Asset -->
+        <div class="glass-panel rounded-2xl border border-gray-800/80 mb-10 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold px-3 py-1.5 rounded-lg">DELETE</span>
+                        <h3 class="text-lg font-bold text-gray-200">/api/assets/{assetId}</h3>
+                    </div>
+                    <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Permanently Delete File</span>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Permanently delete a file from both the storage directory and the database index. Only permitted if the authenticated user owns the asset.</p>
+                
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Success Response (200)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "success": true,
+  "message": "Asset deleted successfully",
+  "assetId": "48b17b2bca6937bc38abda8c9735d1f1"
+}</pre>
+            </div>
+        </div>
+
+        <!-- Folders Endpoints -->
+        <div class="glass-panel rounded-2xl border border-gray-800/80 mb-6 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold px-3 py-1.5 rounded-lg">GET</span>
+                        <h3 class="text-lg font-bold text-gray-200">/api/folders</h3>
+                    </div>
+                    <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">List Folders</span>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Retrieve all virtual folders created by the authenticated workspace email.</p>
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Success Response (200)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "success": true,
+  "data": [
+    {
+      "folderId": "3e9b17ab-4b2e-4bca-8eb1-cf9a1c6a7e0a",
+      "name": "Marketing",
+      "createdAt": "2026-06-19 19:00:00"
+    }
+  ]
+}</pre>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl border border-gray-800/80 mb-6 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-lg">POST</span>
+                        <h3 class="text-lg font-bold text-gray-200">/api/folders</h3>
+                    </div>
+                    <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Create Folder</span>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Creates a new virtual folder for organizing your workspace assets.</p>
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Request Payload (JSON)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "name": "Design Assets"
+}</pre>
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Success Response (200)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "success": true,
+  "message": "Folder created successfully",
+  "folderId": "5f1a3b8c-1e2a-4bcd-86ef-d78a9c2e0b3c",
+  "name": "Design Assets"
+}</pre>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl border border-gray-800/80 mb-6 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold px-3 py-1.5 rounded-lg">DELETE</span>
+                        <h3 class="text-lg font-bold text-gray-200">/api/folders/{folderId}</h3>
+                    </div>
+                    <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Delete Folder</span>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Permanently delete a folder. All files contained inside the folder will automatically move back to the Root directory (none are deleted from storage or database).</p>
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Success Response (200)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "success": true,
+  "message": "Folder deleted successfully. Assets moved to root.",
+  "folderId": "5f1a3b8c-1e2a-4bcd-86ef-d78a9c2e0b3c"
+}</pre>
+            </div>
+        </div>
+
+        <!-- Asset Moving and Renaming -->
+        <div class="glass-panel rounded-2xl border border-gray-800/80 mb-6 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-lg">POST</span>
+                        <h3 class="text-lg font-bold text-gray-200">/api/assets/{assetId}/move</h3>
+                    </div>
+                    <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Move File to Folder</span>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Move an asset to a virtual folder. This only modifies the file's folder metadata in the database; the file's disk storage path and public URL remain unchanged.</p>
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Request Payload (JSON)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "folderId": "5f1a3b8c-1e2a-4bcd-86ef-d78a9c2e0b3c"  // Use null to move file back to root
+}</pre>
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Success Response (200)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "success": true,
+  "message": "Asset moved successfully",
+  "assetId": "48b17b2bca6937bc38abda8c9735d1f1",
+  "folderId": "5f1a3b8c-1e2a-4bcd-86ef-d78a9c2e0b3c"
+}</pre>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl border border-gray-800/80 mb-6 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-lg">POST</span>
+                        <h3 class="text-lg font-bold text-gray-200">/api/assets/move</h3>
+                    </div>
+                    <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Batch Move Files</span>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Move multiple assets in a single batch request to a virtual folder or root level.</p>
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Request Payload (JSON)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "assetIds": ["id1", "id2"],
+  "folderId": "5f1a3b8c-1e2a-4bcd-86ef-d78a9c2e0b3c"  // Or null for Root
+}</pre>
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Success Response (200)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "success": true,
+  "message": "2 assets moved successfully",
+  "folderId": "5f1a3b8c-1e2a-4bcd-86ef-d78a9c2e0b3c"
+}</pre>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl border border-gray-800/80 mb-6 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-bold px-3 py-1.5 rounded-lg">DELETE</span>
+                        <h3 class="text-lg font-bold text-gray-200">/api/assets</h3>
+                    </div>
+                    <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Batch Delete Files</span>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Permanently delete multiple assets from storage and database indexing in a single request.</p>
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Request Payload (JSON)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "assetIds": ["id1", "id2"]
+}</pre>
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Success Response (200)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "success": true,
+  "message": "2 assets deleted successfully",
+  "assetIds": ["id1", "id2"]
+}</pre>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl border border-gray-800/80 mb-6 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-lg">POST</span>
+                        <h3 class="text-lg font-bold text-gray-200">/api/assets/{assetId}/rename</h3>
+                    </div>
+                    <span class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Rename File Metadata</span>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Rename the original filename attribute of an asset in the database. This does not change the physical storage path or the public URL.</p>
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Request Payload (JSON)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "filename": "new_invoice_Q2.xlsx"
+}</pre>
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Success Response (200)</h4>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">{
+  "success": true,
+  "message": "Asset renamed successfully",
+  "assetId": "48b17b2bca6937bc38abda8c9735d1f1",
+  "filename": "new_invoice_Q2.xlsx"
+}</pre>
+            </div>
+        </div>
+
+        <!-- Quick Start cURL -->
+        <div class="glass-panel rounded-2xl border border-gray-800/80 overflow-hidden">
+            <div class="p-6 border-b border-gray-850/80 bg-gray-900/40">
+                <h3 class="text-lg font-bold text-gray-200">Terminal Quick Start</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-400">Upload a secure document from your terminal using cURL:</p>
+                <pre class="bg-gray-950 text-gray-300 p-4 rounded-xl border border-gray-900 text-xs font-mono">curl -X POST \
+  -H "Authorization: Bearer user@example.com" \
+  -F "file=@/path/to/invoice.xlsx" \
+  <span id="curlBaseUrl">http://localhost</span>/api/assets</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin + window.location.pathname.replace(/\/docs\.html$/, '');
+        document.getElementById('baseUrl').textContent = API_BASE;
+        document.getElementById('curlBaseUrl').textContent = API_BASE;
+    </script>
 </body>
 </html>

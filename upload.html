@@ -1,296 +1,343 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload Media - Custom Storage Gateway</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body class="bg-gray-100 min-h-screen">
-  <nav class="bg-gray-800 text-white p-4 shadow-lg">
-    <div class="container mx-auto flex justify-between items-center">
-      <h1 class="text-2xl font-bold"><i class="fas fa-cloud"></i> Media Gateway</h1>
-      <div class="flex gap-2">
-        <a href="/docs" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition flex items-center gap-2">
-          <i class="fas fa-book"></i> Docs
-        </a>
-        <a href="/" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition flex items-center gap-2">
-          <i class="fas fa-th-large"></i> Gallery
-        </a>
-      </div>
-    </div>
-  </nav>
-
-  <main class="container mx-auto p-6 max-w-3xl">
-    <div class="bg-white rounded-lg shadow-lg p-8">
-      <h2 class="text-2xl font-bold text-gray-800 mb-2">Upload Media</h2>
-      <p class="text-gray-600 mb-6">Upload images (JPEG, PNG, GIF, WebP, SVG, BMP, TIFF) or videos (MP4, WebM, OGG, MOV, AVI, MKV). Max size: 500MB.</p>
-
-      <!-- Drag & Drop Zone -->
-      <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-500 hover:bg-blue-50 transition cursor-pointer">
-        <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
-        <p class="text-lg text-gray-700 font-medium mb-2">Drag & drop files here</p>
-        <p class="text-sm text-gray-500 mb-4">or click to browse</p>
-        <input type="file" id="file-input" class="hidden" accept="image/*,video/*" multiple>
-        <button onclick="document.getElementById('file-input').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition">
-          Select Files
-        </button>
-      </div>
-
-      <!-- File list -->
-      <div id="file-list" class="mt-6 hidden">
-        <h3 class="font-semibold text-gray-800 mb-3">Selected Files</h3>
-        <ul id="files" class="space-y-2"></ul>
-      </div>
-
-      <!-- Upload progress -->
-      <div id="upload-progress" class="mt-6 hidden">
-        <div class="flex justify-between items-center mb-2">
-          <span class="text-sm font-medium text-gray-700">Uploading...</span>
-          <span id="progress-percent" class="text-sm text-gray-600">0%</span>
-        </div>
-        <div class="w-full bg-gray-200 rounded-full h-3">
-          <div id="progress-bar" class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
-        </div>
-        <p id="current-file" class="text-sm text-gray-500 mt-2"></p>
-      </div>
-
-      <!-- Upload button -->
-      <div id="upload-actions" class="mt-6 text-right hidden">
-        <button onclick="uploadFiles()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition">
-          <i class="fas fa-upload"></i> Start Upload
-        </button>
-      </div>
-
-      <!-- Success/Error messages -->
-      <div id="message" class="mt-6 p-4 rounded-lg hidden"></div>
-    </div>
-
-    <!-- Recent uploads -->
-    <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
-      <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Uploads</h3>
-      <div id="recent-uploads" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <p class="text-gray-500 col-span-full">No recent uploads</p>
-      </div>
-    </div>
-  </main>
-
-  <script>
-    const filesInput = document.getElementById('file-input');
-    const dropZone = document.getElementById('drop-zone');
-    const fileListEl = document.getElementById('file-list');
-    const filesContainer = document.getElementById('files');
-    const uploadActions = document.getElementById('upload-actions');
-    const uploadProgress = document.getElementById('upload-progress');
-    const progressBar = document.getElementById('progress-bar');
-    const progressPercent = document.getElementById('progress-percent');
-    const currentFileEl = document.getElementById('current-file');
-    const messageEl = document.getElementById('message');
-    const recentUploadsEl = document.getElementById('recent-uploads');
-
-    let selectedFiles = [];
-    const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
-    const ALLOWED_TYPES = ['image/', 'video/'];
-
-    // Drag & drop handlers
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.classList.add('border-blue-500', 'bg-blue-50');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-      const files = Array.from(e.dataTransfer.files);
-      handleFiles(files);
-    });
-
-    filesInput.addEventListener('change', (e) => {
-      const files = Array.from(e.target.files);
-      handleFiles(files);
-    });
-
-    function handleFiles(files) {
-      for (const file of files) {
-        // Validate file type
-        const isValidType = ALLOWED_TYPES.some(type => file.type.startsWith(type));
-        if (!isValidType) {
-          alert(`File "${file.name}" is not an allowed image or video type.`);
-          continue;
-        }
-
-        // Validate file size
-        if (file.size > MAX_FILE_SIZE) {
-          alert(`File "${file.name}" exceeds 500MB limit.`);
-          continue;
-        }
-
-        // Check if already added
-        if (selectedFiles.some(f => f.name === file.name && f.size === file.size)) {
-          continue;
-        }
-
-        selectedFiles.push(file);
-      }
-
-      if (selectedFiles.length > 0) {
-        fileListEl.classList.remove('hidden');
-        uploadActions.classList.remove('hidden');
-        renderFileList();
-      }
-    }
-
-    function renderFileList() {
-      filesContainer.innerHTML = '';
-      selectedFiles.forEach((file, index) => {
-        const li = document.createElement('li');
-        li.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
-        li.innerHTML = `
-          <div class="flex items-center gap-3">
-            <i class="fas ${file.type.startsWith('image/') ? 'fa-image' : 'fa-video'} text-blue-600"></i>
-            <div>
-              <p class="font-medium text-gray-800">${file.name}</p>
-              <p class="text-sm text-gray-500">${formatBytes(file.size)}</p>
-            </div>
-          </div>
-          <button onclick="removeFile(${index})" class="text-red-500 hover:text-red-700">
-            <i class="fas fa-times"></i>
-          </button>
-        `;
-        filesContainer.appendChild(li);
-      });
-    }
-
-    function removeFile(index) {
-      selectedFiles.splice(index, 1);
-      if (selectedFiles.length === 0) {
-        fileListEl.classList.add('hidden');
-        uploadActions.classList.add('hidden');
-      }
-      renderFileList();
-    }
-
-    async function uploadFiles() {
-      if (selectedFiles.length === 0) return;
-
-      uploadActions.classList.add('hidden');
-      uploadProgress.classList.remove('hidden');
-      currentFileEl.textContent = `Uploading: ${selectedFiles[0].name}`;
-      recentUploadsEl.innerHTML = '<p class="text-gray-500 col-span-full">Uploading...</p>';
-
-      const formData = new FormData();
-      formData.append('file', selectedFiles[0]);
-
-      try {
-        const xhr = new XMLHttpRequest();
-
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            const percent = Math.round((e.loaded / e.total) * 100);
-            progressBar.style.width = percent + '%';
-            progressPercent.textContent = percent + '%';
-          }
-        });
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            const result = JSON.parse(xhr.responseText);
-            if (result.success) {
-              showMessage('Upload completed successfully!', 'success');
-              selectedFiles = [];
-              fileListEl.classList.add('hidden');
-              uploadProgress.classList.add('hidden');
-              progressBar.style.width = '0%';
-              loadRecentUploads();
-            } else {
-              throw new Error(result.error || 'Upload failed');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Secure Files - Custom Gateway</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Bricolage Grotesque"', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff',
+                            100: '#e0ebff',
+                            500: '#4169e1', // Royal Blue
+                            600: '#3a5ec9',
+                            700: '#2f4eb3',
+                            900: '#1b2f7a',
+                        }
+                    }
+                }
             }
-          } else {
-            const error = JSON.parse(xhr.responseText);
-            throw new Error(error.error || 'Upload failed');
-          }
-        });
-
-        xhr.addEventListener('error', () => {
-          throw new Error('Network error');
-        });
-
-        xhr.open('POST', 'api.php/upload');
-        xhr.send(formData);
-      } catch (error) {
-        console.error('Upload error:', error);
-        showMessage(`Upload failed: ${error.message}`, 'error');
-        uploadActions.classList.remove('hidden');
-        uploadProgress.classList.add('hidden');
-      }
-    }
-
-    function showMessage(text, type) {
-      messageEl.textContent = text;
-      messageEl.className = `mt-6 p-4 rounded-lg ${type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
-      messageEl.classList.remove('hidden');
-      setTimeout(() => messageEl.classList.add('hidden'), 5000);
-    }
-
-    async function loadRecentUploads() {
-      try {
-        const response = await fetch('api.php?limit=6');
-        const text = await response.text();
-        
-        // Debug: log the raw response
-        console.log('Raw response:', text);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        const result = text ? JSON.parse(text) : { success: false, data: [] };
-        
-        if (result.success && result.data.length > 0) {
-          recentUploadsEl.innerHTML = '';
-          result.data.forEach(asset => {
-            const isImg = asset.mimeType.startsWith('image/');
-            const card = document.createElement('div');
-            card.className = 'border rounded-lg overflow-hidden hover:shadow-md transition';
-            card.innerHTML = `
-              <div class="relative">
-                <a href="${asset.publicUrl}" target="_blank">
-                  ${isImg
-                    ? `<img src="${asset.publicUrl}" alt="${asset.originalFilename}" class="w-full h-32 object-cover">`
-                    : `<video src="${asset.publicUrl}" class="w-full h-32 object-cover" muted></video>`
-                  }
-                </a>
-              </div>
-              <div class="p-3">
-                <p class="text-sm font-medium text-gray-800 truncate">${asset.originalFilename}</p>
-                <p class="text-xs text-gray-500">${formatBytes(asset.fileSize)}</p>
-              </div>
+    </script>
+    <style>
+        body {
+            background-color: #000000;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(65, 105, 225, 0.12) 0, transparent 50%), 
+                radial-gradient(at 100% 100%, rgba(65, 105, 225, 0.08) 0, transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .drop-zone-active {
+            border-color: #8b5cf6 !important;
+            background: rgba(124, 58, 237, 0.1) !important;
+        }
+    </style>
+</head>
+<body class="text-gray-100 min-h-screen font-sans">
+    
+    <div class="container mx-auto py-8 px-4 max-w-3xl">
+        <header class="flex justify-between items-center mb-8">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-brand-500/10 border border-brand-500/20 rounded-xl">
+                    <svg class="w-6 h-6 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+                <span class="text-lg font-bold text-gray-200">Custom Gateway</span>
+            </div>
+            <a href="/" class="px-4 py-2 bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-300 hover:text-white rounded-xl text-sm font-semibold transition flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l-7-7m7-7H3"></path></svg>
+                <span>Dashboard</span>
+            </a>
+        </header>
+
+        <div class="glass-panel rounded-2xl border border-gray-800/80 p-6 sm:p-8">
+            <h2 class="text-2xl font-bold mb-2">Upload Files</h2>
+            <p class="text-gray-400 text-sm mb-6">Your session is connected to space: <span class="font-semibold text-gray-300" id="sessionEmail">...</span></p>
+
+            <!-- Drag & Drop Zone -->
+            <div id="dropZone" class="border-2 border-dashed border-gray-800 hover:border-brand-500/50 bg-gray-900/20 rounded-2xl p-12 text-center cursor-pointer transition-all duration-200 group">
+                <input type="file" id="fileInput" class="hidden" multiple onchange="handleFileSelect(event)">
+                <svg class="mx-auto h-12 w-12 text-gray-500 group-hover:text-brand-500 transition duration-200 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="text-sm font-semibold text-gray-300">
+                    <span class="text-brand-400 hover:text-brand-300">Click to choose files</span> or drag & drop here
+                </p>
+                <p class="text-xs text-gray-500 mt-2">
+                    Images, Videos, PDFs, ZIP, Spreadsheets, presentations, Audio, Text (up to 500MB)
+                </p>
+            </div>
+
+            <!-- Uploading Progress/Status List -->
+            <div id="uploadList" class="mt-6 space-y-4"></div>
+        </div>
+
+        <div class="mt-6 bg-brand-500/5 border border-brand-500/10 rounded-2xl p-5">
+            <h3 class="font-semibold text-brand-400 text-sm mb-2">Upload Tips</h3>
+            <ul class="text-xs text-gray-400 space-y-1.5">
+                <li>• All uploaded files are private to your logged-in email space.</li>
+                <li>• Links generated can be shared directly with trusted recipients.</li>
+                <li>• Drag multiple documents at once to upload them in batch.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Logic Script -->
+    <script>
+        const API_BASE = window.location.origin + window.location.pathname.replace(/\/upload\.html$/, '').replace(/\/$/, '');
+        let email = localStorage.getItem('custom_gateway_email');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!email) {
+                // If not authenticated, send to main index page
+                window.location.href = '/';
+                return;
+            }
+            document.getElementById('sessionEmail').textContent = email;
+            setupDragAndDrop();
+        });
+
+        function getAuthHeader() {
+            return { 
+                'Authorization': `Bearer ${btoa(email)}`,
+                'X-User-Email': email
+            };
+        }
+
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+            
+            dropZone.addEventListener('click', () => document.getElementById('fileInput').click());
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('drop-zone-active');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('drop-zone-active');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    handleFilesUpload(files);
+                }
+            });
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                handleFilesUpload(files);
+            }
+        }
+
+        const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
+
+        function handleFilesUpload(files) {
+            Array.from(files).forEach(file => {
+                uploadSingleFile(file);
+            });
+        }
+
+        // Generate a safe unique string identifier for a file
+        function getFileId(file) {
+            const cleanName = file.name.replace(/[^a-zA-Z0-9]/g, '');
+            return `file${cleanName}${file.size}${file.lastModified}`;
+        }
+
+        function uploadSingleFile(file, existingRowId = null) {
+            const list = document.getElementById('uploadList');
+            const fileId = getFileId(file);
+            const rowId = existingRowId || 'upload-row-' + Math.random().toString(36).substr(2, 9);
+            
+            if (!existingRowId) {
+                const item = document.createElement('div');
+                item.id = rowId;
+                item.className = "glass-panel p-4 rounded-xl border border-gray-800 flex flex-col space-y-2";
+                item.innerHTML = `
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="font-medium text-gray-200 truncate max-w-xs">${file.name}</span>
+                        <span class="text-xs text-gray-500" id="${rowId}-percent">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-950 h-2 rounded-full overflow-hidden">
+                        <div id="${rowId}-bar" class="bg-brand-500 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-gray-500">
+                        <span>${formatBytes(file.size)}</span>
+                        <span id="${rowId}-status">Preparing...</span>
+                    </div>
+                `;
+                list.prepend(item);
+            } else {
+                // Reset UI to uploading
+                document.getElementById(`${rowId}-bar`).className = "bg-brand-500 h-full rounded-full transition-all duration-200";
+                document.getElementById(`${rowId}-percent`).className = "text-xs text-gray-500";
+                document.getElementById(`${rowId}-status`).className = "text-gray-500 text-xs";
+                document.getElementById(`${rowId}-status`).textContent = "Resuming...";
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const folderId = urlParams.get('folderId') || '';
+
+            // Step 1: Check upload status on the server
+            fetch(`${API_BASE}/api/assets/upload-status?fileId=${fileId}&t=${Date.now()}`, {
+                headers: getAuthHeader()
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const offset = data.uploadedBytes || 0;
+                    uploadChunks(file, fileId, rowId, offset, folderId);
+                } else {
+                    throw new Error(data.error || 'Failed to get upload status');
+                }
+            })
+            .catch(err => {
+                handleUploadFail(rowId, err.message, file, folderId);
+            });
+        }
+
+        function uploadChunks(file, fileId, rowId, offset, folderId) {
+            if (offset >= file.size) {
+                document.getElementById(`${rowId}-bar`).style.width = '100%';
+                document.getElementById(`${rowId}-percent`).textContent = '100%';
+                document.getElementById(`${rowId}-status`).textContent = "Verifying upload...";
+            }
+
+            const chunk = file.slice(offset, Math.min(offset + CHUNK_SIZE, file.size));
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `${API_BASE}/api/assets/upload-chunk`, true);
+            
+            // Set Headers
+            const headers = getAuthHeader();
+            Object.keys(headers).forEach(key => {
+                xhr.setRequestHeader(key, headers[key]);
+            });
+            
+            xhr.setRequestHeader('X-File-Id', fileId);
+            xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.name));
+            xhr.setRequestHeader('X-File-Size', file.size.toString());
+            xhr.setRequestHeader('X-Chunk-Offset', offset.toString());
+            if (folderId) {
+                xhr.setRequestHeader('X-Folder-Id', folderId);
+            }
+
+            // Track progress of the CURRENT chunk
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const loadedTotal = offset + e.loaded;
+                    const percent = Math.round((loadedTotal / file.size) * 100);
+                    document.getElementById(`${rowId}-bar`).style.width = percent + '%';
+                    document.getElementById(`${rowId}-percent`).textContent = percent + '%';
+                    document.getElementById(`${rowId}-status`).textContent = `Uploading... (${formatBytes(loadedTotal)} / ${formatBytes(file.size)})`;
+                }
+            });
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        if (res.success) {
+                            if (res.completed) {
+                                // Finalized successfully!
+                                document.getElementById(`${rowId}-bar`).className = "bg-emerald-500 h-full rounded-full";
+                                document.getElementById(`${rowId}-percent`).className = "text-xs text-emerald-400";
+                                document.getElementById(`${rowId}-percent`).textContent = '100%';
+                                document.getElementById(`${rowId}-status`).innerHTML = `Uploaded! Link: <a href="${cleanUrl(res.data.publicUrl)}" target="_blank" class="text-brand-400 hover:underline font-mono">${cleanUrl(res.data.publicUrl)}</a>`;
+                                document.getElementById(`${rowId}-status`).className = "text-emerald-400 text-xs mt-1 block truncate";
+                            } else {
+                                // Upload next chunk
+                                const nextOffset = res.uploadedBytes;
+                                uploadChunks(file, fileId, rowId, nextOffset, folderId);
+                            }
+                        } else {
+                            throw new Error(res.error || 'Chunk upload failed');
+                        }
+                    } catch (err) {
+                        handleUploadFail(rowId, err.message, file, folderId);
+                    }
+                } else {
+                    handleUploadFail(rowId, `Server error code ${xhr.status}`, file, folderId);
+                }
+            };
+
+            xhr.onerror = function() {
+                handleUploadFail(rowId, 'Network error', file, folderId);
+            };
+
+            xhr.send(chunk);
+        }
+
+        function handleUploadFail(rowId, errorMsg, file, folderId) {
+            document.getElementById(`${rowId}-bar`).className = "bg-red-500 h-full rounded-full";
+            document.getElementById(`${rowId}-percent`).className = "text-xs text-red-400";
+            
+            const statusEl = document.getElementById(`${rowId}-status`);
+            statusEl.className = "text-red-400 flex items-center justify-between w-full mt-1 text-xs";
+            statusEl.innerHTML = `
+                <span class="truncate pr-2">Failed: ${errorMsg}</span>
+                <button onclick="resumeUploadByRowId('${rowId}')" class="px-2.5 py-1 bg-brand-500 hover:bg-brand-600 text-white rounded-md text-xs font-semibold shadow transition-all duration-150 shrink-0">Resume</button>
             `;
-            recentUploadsEl.appendChild(card);
-          });
-        } else {
-          recentUploadsEl.innerHTML = '<p class="text-gray-500 col-span-full">No uploads yet</p>';
+            
+            // Store file reference in a global queue to enable resuming
+            if (!window.uploadQueue) {
+                window.uploadQueue = {};
+            }
+            window.uploadQueue[rowId] = { file, folderId };
         }
-      } catch (error) {
-        console.error('Failed to load recent uploads:', error);
-      }
-    }
 
-    function formatBytes(bytes) {
-      if (bytes === 0) return '0 B';
-      const k = 1024;
-      const sizes = ['B', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
+        function resumeUploadByRowId(rowId) {
+            if (window.uploadQueue && window.uploadQueue[rowId]) {
+                const { file } = window.uploadQueue[rowId];
+                uploadSingleFile(file, rowId);
+            }
+        }
 
-    // Initial load
-    loadRecentUploads();
-  </script>
+        function cleanUrl(url) {
+            if (!url) return url;
+            // Fix legacy database entries that were saved with broken 'http:/' or 'https:/' protocol slashes
+            if (url.startsWith('http:/') && !url.startsWith('http://')) {
+                return url.replace('http:/', 'http://');
+            }
+            if (url.startsWith('https:/') && !url.startsWith('https://')) {
+                return url.replace('https:/', 'https://');
+            }
+            return url;
+        }
+
+        function formatBytes(bytes, precision = 2) {
+            const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            bytes = Math.max(bytes, 0);
+            const pow = Math.floor((bytes ? Math.log(bytes) : 0) / Math.log(1024));
+            const powIndex = Math.min(pow, units.length - 1);
+            bytes /= Math.pow(1024, powIndex);
+            return bytes.toFixed(precision) + ' ' + units[powIndex];
+        }
+    </script>
 </body>
 </html>

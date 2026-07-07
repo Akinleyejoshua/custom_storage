@@ -1,239 +1,2022 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Media Gallery - Custom Storage Gateway</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Storage Gateway - Premium Dashboard</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Bricolage Grotesque"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff',
+                            100: '#e0ebff',
+                            500: '#4169e1', // Royal Blue
+                            600: '#3a5ec9',
+                            700: '#2f4eb3',
+                            900: '#1b2f7a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #000000;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(65, 105, 225, 0.15) 0, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(65, 105, 225, 0.08) 0, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: rgba(31, 41, 55, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-4px);
+            background: rgba(31, 41, 55, 0.6);
+            border-color: rgba(124, 58, 237, 0.3);
+            box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.2);
+        }
+
+        .glow-hover:hover {
+            box-shadow: 0 0 15px rgba(124, 58, 237, 0.4);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #1f2937;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151;
+        }
+
+        .drop-zone-active {
+            border-color: #8b5cf6 !important;
+            background: rgba(124, 58, 237, 0.1) !important;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-  <nav class="bg-gray-800 text-white p-4 shadow-lg">
-    <div class="container mx-auto flex justify-between items-center">
-      <h1 class="text-2xl font-bold"><i class="fas fa-cloud"></i> Media Gateway</h1>
-      <div class="flex gap-2">
-        <a href="/docs" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition flex items-center gap-2">
-          <i class="fas fa-book"></i> Docs
-        </a>
-        <a href="/upload" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition flex items-center gap-2">
-          <i class="fas fa-upload"></i> Upload
-        </a>
-      </div>
-    </div>
-  </nav>
 
-  <main class="container mx-auto p-6">
-    <div class="mb-6 flex justify-between items-center">
-      <h2 class="text-2xl font-semibold text-gray-800">Gallery</h2>
-      <div class="flex gap-2">
-        <button onclick="loadAssets()" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded text-white transition">
-          <i class="fas fa-sync-alt"></i> Refresh
+<body class="text-gray-100 min-h-screen font-sans selection:bg-brand-500 selection:text-white">
+
+    <!-- Auth View -->
+    <div id="authView" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-40 h-40 bg-brand-500 rounded-full blur-[80px] opacity-40"></div>
+            <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-500 rounded-full blur-[80px] opacity-40"></div>
+
+            <div class="text-center mb-8 relative z-10">
+                <div class="inline-flex p-3 bg-brand-500/10 rounded-2xl mb-4 border border-brand-500/20">
+                    <svg class="w-8 h-8 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                        </path>
+                    </svg>
+                </div>
+                <h2
+                    class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-gray-100 to-gray-400 bg-clip-text text-transparent">
+                    Custom Gateway</h2>
+                <p class="text-gray-400 mt-2 text-sm">Enter your email to view and manage your secure documents</p>
+            </div>
+
+            <form id="loginForm" class="space-y-5 relative z-10" onsubmit="handleLogin(event)">
+                <div>
+                    <label for="email"
+                        class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Email
+                        Address</label>
+                    <input type="email" id="email" required placeholder="name@company.com"
+                        class="w-full px-4 py-3 bg-gray-900/60 border border-gray-800 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition text-gray-100 placeholder-gray-500">
+                </div>
+                <button type="submit"
+                    class="w-full py-3 px-4 bg-brand-600 hover:bg-brand-500 active:bg-brand-700 text-white font-semibold rounded-xl transition duration-200 shadow-lg shadow-brand-500/20 flex items-center justify-center space-x-2 glow-hover">
+                    <span>Connect Space</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard View (Hidden initially) -->
+    <div id="dashboardView" class="hidden min-h-screen flex flex-col">
+        <!-- Navigation Header -->
+        <header class="glass-panel border-b border-gray-800/80 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16 items-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-brand-500/10 border border-brand-500/20 rounded-xl">
+                            <svg class="w-6 h-6 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                </path>
+                            </svg>
+                        </div>
+                        <h1
+                            class="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                            Custom Storage</h1>
+                    </div>
+
+                    <!-- Navigation Links & Profile -->
+                    <!-- Navigation Links & Profile -->
+                    <div class="flex items-center space-x-4 md:space-x-6">
+                        <nav class="hidden md:flex items-center space-x-1">
+                            <a href="#" onclick="switchTab('gallery')" id="nav-gallery"
+                                class="px-4 py-2 rounded-lg text-brand-500 font-medium transition bg-brand-500/10">Gallery</a>
+                            <a href="#" onclick="switchTab('upload')" id="nav-upload"
+                                class="px-4 py-2 rounded-lg text-gray-400 hover:text-gray-200 transition">Upload
+                                File</a>
+                            <a href="docs.html"
+                                class="px-4 py-2 rounded-lg text-gray-400 hover:text-gray-200 transition">API Docs</a>
+                            <a href="admin.html"
+                                class="px-4 py-2 rounded-lg text-gray-400 hover:text-gray-200 transition">Admin Panel</a>
+                        </nav>
+                        <div class="h-6 w-px bg-gray-800 hidden md:block"></div>
+                        <div class="flex items-center space-x-3">
+                            <div class="text-right hidden sm:block">
+                                <p class="text-xs text-gray-500">Connected space</p>
+                                <p class="text-sm font-semibold text-gray-300" id="userEmailDisplay">...</p>
+                            </div>
+                            <button onclick="openDeactivateModal()"
+                                class="p-2.5 bg-gray-900 border border-gray-800 hover:border-red-500/30 hover:bg-red-500/10 rounded-xl text-gray-400 hover:text-red-500 transition duration-150"
+                                title="Deactivate Space">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                    </path>
+                                </svg>
+                            </button>
+                            <button onclick="handleLogout()"
+                                class="p-2.5 bg-gray-900 border border-gray-800 hover:border-red-500/30 hover:bg-red-500/10 rounded-xl text-gray-400 hover:text-red-500 transition duration-150"
+                                title="Disconnect Space">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                        <!-- Mobile Hamburger Trigger -->
+                        <button onclick="toggleMobileMenu()"
+                            class="p-2.5 bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-white rounded-xl md:hidden transition">
+                            <svg id="hamburgerIcon" class="w-5 h-5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M4 6h16M4 12h16m-7 6h7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Mobile Dropdown Menu -->
+        <div id="mobileMenu"
+            class="fixed top-16 left-0 w-full bg-black/95 backdrop-blur-lg border-b border-gray-900 z-30 transition-all duration-300 transform -translate-y-full opacity-0 hidden md:hidden">
+            <div class="px-6 py-6 space-y-5">
+                <div class="pb-4 border-b border-gray-900 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Connected Space</p>
+                        <p class="text-sm font-semibold text-gray-300 mt-0.5" id="mobileUserEmail">...</p>
+                    </div>
+                </div>
+                <nav class="flex flex-col space-y-2">
+                    <a href="#" onclick="switchTab('gallery'); toggleMobileMenu()" id="mobile-nav-gallery"
+                        class="px-4 py-3 rounded-xl text-brand-400 font-medium transition bg-brand-500/10">Gallery</a>
+                    <a href="#" onclick="switchTab('upload'); toggleMobileMenu()" id="mobile-nav-upload"
+                        class="px-4 py-3 rounded-xl text-gray-400 hover:text-gray-200 transition">Upload File</a>
+                    <a href="docs.html" class="px-4 py-3 rounded-xl text-gray-400 hover:text-gray-200 transition">API
+                        Docs</a>
+                    <a href="admin.html" class="px-4 py-3 rounded-xl text-gray-400 hover:text-gray-200 transition font-medium">Admin
+                        Panel</a>
+                    <a href="#" onclick="openDeactivateModal(); toggleMobileMenu()" class="px-4 py-3 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 transition font-medium">Deactivate Space</a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Body -->
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+            <!-- Gallery Tab -->
+            <div id="tab-gallery">
+                <!-- Storage Quota Widget -->
+                <div class="glass-panel p-6 rounded-2xl border border-gray-800/80 mb-6 relative overflow-hidden">
+                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-500 rounded-full blur-[80px] opacity-20"></div>
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-200">Workspace Storage</h3>
+                            <p class="text-xs text-gray-500 mt-1">Shared quota across all categorized assets</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xl font-bold text-white" id="storage-used-display">0 B</span>
+                            <span class="text-sm text-gray-500 font-medium">/ Unlimited Used</span>
+                            <span class="ml-2 px-2 py-0.5 bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-bold rounded-lg" id="storage-percentage-badge">Unlimited</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Premium Multi-segment Progress Bar -->
+                    <div class="w-full h-3 bg-gray-900 rounded-full overflow-hidden flex mb-4">
+                        <div id="bar-image" class="h-full bg-purple-500 transition-all duration-500" style="width: 0%"></div>
+                        <div id="bar-video" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
+                        <div id="bar-document" class="h-full bg-emerald-500 transition-all duration-500" style="width: 0%"></div>
+                        <div id="bar-archive" class="h-full bg-yellow-500 transition-all duration-500" style="width: 0%"></div>
+                        <div id="bar-audio" class="h-full bg-pink-500 transition-all duration-500" style="width: 0%"></div>
+                        <div id="bar-other" class="h-full bg-gray-500 transition-all duration-500" style="width: 0%"></div>
+                    </div>
+
+                    <!-- Progress Legend -->
+                    <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                            <span class="text-gray-400">Images</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                            <span class="text-gray-400">Videos</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            <span class="text-gray-400">Documents</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+                            <span class="text-gray-400">Archives</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span>
+                            <span class="text-gray-400">Audio</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-gray-500"></span>
+                            <span class="text-gray-400">Other</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+                    <!-- Total Counter -->
+                    <div class="glass-panel p-4 rounded-2xl border border-gray-800/80 flex flex-col justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Assets</p>
+                            <p class="text-2xl font-bold text-white mt-1" id="stat-total">0</p>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2 font-mono" id="stat-total-size">0 B (0%)</p>
+                    </div>
+                    <!-- Images Counter -->
+                    <div class="glass-panel p-4 rounded-2xl border border-gray-800/80 flex flex-col justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Images</p>
+                            <p class="text-2xl font-bold text-purple-400 mt-1" id="stat-images">0</p>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2 font-mono" id="stat-images-size">0 B (0%)</p>
+                    </div>
+                    <!-- Videos Counter -->
+                    <div class="glass-panel p-4 rounded-2xl border border-gray-800/80 flex flex-col justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Videos</p>
+                            <p class="text-2xl font-bold text-blue-400 mt-1" id="stat-videos">0</p>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2 font-mono" id="stat-videos-size">0 B (0%)</p>
+                    </div>
+                    <!-- Documents Counter -->
+                    <div class="glass-panel p-4 rounded-2xl border border-gray-800/80 flex flex-col justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Documents</p>
+                            <p class="text-2xl font-bold text-emerald-400 mt-1" id="stat-docs">0</p>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2 font-mono" id="stat-docs-size">0 B (0%)</p>
+                    </div>
+                    <!-- Archives Counter -->
+                    <div class="glass-panel p-4 rounded-2xl border border-gray-800/80 flex flex-col justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Archives</p>
+                            <p class="text-2xl font-bold text-yellow-400 mt-1" id="stat-archives">0</p>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2 font-mono" id="stat-archives-size">0 B (0%)</p>
+                    </div>
+                    <!-- Audio Counter -->
+                    <div class="glass-panel p-4 rounded-2xl border border-gray-800/80 col-span-2 sm:col-span-1 flex flex-col justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Audio</p>
+                            <p class="text-2xl font-bold text-pink-400 mt-1" id="stat-audio">0</p>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2 font-mono" id="stat-audio-size">0 B (0%)</p>
+                    </div>
+                </div>
+
+                <!-- Filters & Search Toolbar -->
+                <div
+                    class="glass-panel p-4 rounded-2xl border border-gray-800/80 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex flex-wrap gap-2" id="typeFilters">
+                        <button onclick="filterType('all')" id="filter-all"
+                            class="px-3.5 py-1.5 rounded-xl text-sm font-medium transition bg-brand-600 text-white">All
+                            Files</button>
+                        <button onclick="filterType('image')" id="filter-image"
+                            class="px-3.5 py-1.5 rounded-xl text-sm font-medium transition bg-gray-900 border border-gray-800 text-gray-400 hover:text-white">Images</button>
+                        <button onclick="filterType('video')" id="filter-video"
+                            class="px-3.5 py-1.5 rounded-xl text-sm font-medium transition bg-gray-900 border border-gray-800 text-gray-400 hover:text-white">Videos</button>
+                        <button onclick="filterType('document')" id="filter-document"
+                            class="px-3.5 py-1.5 rounded-xl text-sm font-medium transition bg-gray-900 border border-gray-800 text-gray-400 hover:text-white">Documents</button>
+                        <button onclick="filterType('archive')" id="filter-archive"
+                            class="px-3.5 py-1.5 rounded-xl text-sm font-medium transition bg-gray-900 border border-gray-800 text-gray-400 hover:text-white">Archives</button>
+                        <button onclick="filterType('audio')" id="filter-audio"
+                            class="px-3.5 py-1.5 rounded-xl text-sm font-medium transition bg-gray-900 border border-gray-800 text-gray-400 hover:text-white">Audio</button>
+                    </div>
+                    <div class="flex items-center space-x-3 w-full md:w-auto">
+                        <div class="relative w-full md:w-80">
+                            <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search assets..."
+                                class="w-full pl-10 pr-4 py-2 bg-gray-900/60 border border-gray-800 rounded-xl focus:outline-none focus:border-brand-500 text-sm text-gray-100 placeholder-gray-500">
+                            <svg class="w-5 h-5 text-gray-500 absolute left-3 top-2.5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <button onclick="toggleViewMode()" id="viewModeBtn"
+                            class="p-2.5 bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-white rounded-xl transition"
+                            title="Toggle Grid/Table View">
+                            <svg id="viewGridIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                                </path>
+                            </svg>
+                            <svg id="viewTableIcon" class="w-5 h-5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Breadcrumbs & Create Folder Toolbar -->
+                <div class="flex items-center justify-between mb-6">
+                    <!-- Breadcrumbs -->
+                    <div class="flex items-center space-x-2 text-sm" id="breadcrumbs">
+                        <button onclick="navigateToFolder(null)"
+                            class="text-brand-400 hover:underline font-semibold flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                                </path>
+                            </svg>
+                            <span>Root</span>
+                        </button>
+                        <span id="breadcrumbSeparator" class="text-gray-600 hidden">/</span>
+                        <span id="breadcrumbFolder" class="text-gray-300 font-medium hidden">...</span>
+                    </div>
+
+                    <!-- Create Folder Action -->
+                    <button onclick="promptCreateFolder()"
+                        class="px-4 py-2 bg-gray-900 border border-gray-800 hover:border-brand-500/50 text-gray-300 hover:text-white rounded-xl text-sm font-semibold transition flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0"></path>
+                        </svg>
+                        <span>New Folder</span>
+                    </button>
+                </div>
+
+                <!-- Folders List Section -->
+                <div id="foldersContainer" class="mb-8 hidden">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Folders</h3>
+                    <div id="foldersGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <!-- Folders render here -->
+                    </div>
+                </div>
+
+                <!-- Gallery Loader -->
+                <div id="galleryLoading" class="hidden text-center py-20">
+                    <div
+                        class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-brand-500">
+                    </div>
+                    <p class="mt-4 text-gray-400 text-sm">Fetching files...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="galleryEmpty"
+                    class="hidden text-center py-20 glass-panel rounded-2xl border border-gray-800/80">
+                    <svg class="mx-auto h-16 w-16 text-gray-600 mb-4" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-300">No assets in this workspace</h3>
+                    <p class="text-gray-500 text-sm mt-1">Upload a file to get started.</p>
+                    <button onclick="switchTab('upload')"
+                        class="mt-6 inline-flex items-center px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-xl shadow-lg transition duration-200">
+                        Upload Asset
+                    </button>
+                </div>
+
+                <!-- Gallery Grid -->
+                <div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+
+                <!-- Load More Button -->
+                <div id="loadMoreContainer" class="hidden text-center mt-12">
+                    <button onclick="loadMore()"
+                        class="px-6 py-3 bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-300 hover:text-white rounded-xl text-sm font-semibold transition">
+                        Load More Files
+                    </button>
+                </div>
+            </div>
+
+            <!-- Upload Tab -->
+            <div id="tab-upload" class="hidden max-w-2xl mx-auto">
+                <div class="glass-panel rounded-2xl border border-gray-800/80 p-6 sm:p-8">
+                    <h2 class="text-2xl font-bold mb-2">Upload Files</h2>
+                    <p class="text-gray-400 text-sm mb-6">Drop your documents, media, or archives below to store them
+                        securely.</p>
+
+                    <!-- Drag & Drop Zone -->
+                    <div id="dropZone"
+                        class="border-2 border-dashed border-gray-800 hover:border-brand-500/50 bg-gray-900/20 rounded-2xl p-10 text-center cursor-pointer transition-all duration-200 group">
+                        <input type="file" id="fileInput" class="hidden" multiple onchange="handleFileSelect(event)">
+                        <svg class="mx-auto h-12 w-12 text-gray-500 group-hover:text-brand-500 transition duration-200 mb-4"
+                            stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path
+                                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <p class="text-sm font-semibold text-gray-300">
+                            <span class="text-brand-400 hover:text-brand-300">Click to choose a file</span> or drag &
+                            drop here
+                        </p>
+                        <p class="text-xs text-gray-500 mt-2">
+                            Images, Videos, PDFs, ZIP, Spreadsheets, PPT, Word, Audio, Text (up to 500MB)
+                        </p>
+                    </div>
+
+                    <!-- Uploading Progress/Status List -->
+                    <div id="uploadList" class="mt-6 space-y-4"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Asset Detail Modal -->
+    <div id="detailModal"
+        class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+            class="glass-panel w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-6 border-b border-gray-800/80">
+                <h3 class="text-lg font-bold text-gray-200 truncate pr-6" id="modalTitle">Asset Details</h3>
+                <button onclick="closeModal()"
+                    class="text-gray-400 hover:text-gray-200 transition p-1 rounded-lg bg-gray-900 border border-gray-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto flex-grow grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Preview Side -->
+                <div class="flex flex-col justify-center items-center bg-gray-950/60 rounded-xl border border-gray-900 p-4 min-h-[250px] relative overflow-hidden"
+                    id="modalPreview">
+                    <!-- Dynamic preview content -->
+                </div>
+
+                <!-- Info Side -->
+                <div class="flex flex-col justify-between">
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Original Filename
+                            </p>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <input type="text" id="infoFilenameInput"
+                                    class="flex-grow bg-gray-900 text-gray-200 text-sm px-3 py-1.5 rounded-xl border border-gray-800 focus:outline-none focus:border-brand-500">
+                                <button onclick="renameAssetFromModal()"
+                                    class="py-1.5 px-3 bg-brand-600/10 border border-brand-500/20 hover:bg-brand-600 hover:border-brand-500 text-xs font-semibold text-brand-400 hover:text-white rounded-xl transition">
+                                    Rename
+                                </button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">File Size</p>
+                                <p class="text-sm font-medium text-gray-200 mt-1" id="infoSize">...</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">MIME Type</p>
+                                <p class="text-sm font-mono text-xs text-gray-300 mt-1 truncate" id="infoMime">...</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Uploaded At</p>
+                            <p class="text-sm font-medium text-gray-200 mt-1" id="infoDate">...</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Asset Unique ID</p>
+                            <p class="text-xs font-mono text-gray-400 mt-1 select-all" id="infoId">...</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Folder
+                                Location</p>
+                            <select id="modalFolderSelect" onchange="moveAssetFromModal()"
+                                class="w-full bg-gray-900 text-gray-300 text-xs px-3 py-2.5 rounded-xl border border-gray-800 focus:outline-none">
+                                <option value="">Root / Unorganized</option>
+                                <!-- Folders populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Direct Link & Copy Action -->
+                    <div class="mt-8 pt-6 border-t border-gray-900 space-y-4">
+                        <div>
+                            <label
+                                class="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">Secure
+                                Link</label>
+                            <div class="flex">
+                                <input type="text" readonly id="infoUrl"
+                                    class="flex-1 bg-gray-900 text-gray-300 text-xs px-3 py-2.5 rounded-l-xl border border-gray-800 focus:outline-none font-mono">
+                                <button onclick="copyModalUrl()" id="modalCopyBtn"
+                                    class="bg-brand-600 hover:bg-brand-500 text-white text-xs px-4 rounded-r-xl font-semibold transition">
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3">
+                            <a href="#" target="_blank" id="modalDownloadBtn"
+                                class="flex-1 py-2 px-4 bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 hover:text-white rounded-xl text-center text-sm font-semibold transition flex items-center justify-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                <span>Open Link</span>
+                            </a>
+                            <button onclick="triggerDeleteAsset()"
+                                class="flex-1 py-2 px-4 bg-red-950/20 hover:bg-red-950/40 border border-red-900/50 hover:border-red-900 text-red-400 hover:text-red-300 rounded-xl text-sm font-semibold transition flex items-center justify-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                    </path>
+                                </svg>
+                                <span>Delete Asset</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Deactivate Space Modal -->
+    <div id="deactivateModal"
+        class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-red-500 rounded-full blur-[80px] opacity-20"></div>
+
+            <div class="text-center mb-6">
+                <div class="inline-flex p-3 bg-red-500/10 rounded-2xl mb-4 border border-red-500/20">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-200">Deactivate Space</h3>
+                <p class="text-gray-400 mt-2 text-sm">This will soft-delete your account space. Admins can recover this space later.</p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="p-4 bg-gray-950/60 border border-gray-900 rounded-xl">
+                    <label class="flex items-start space-x-3 cursor-pointer">
+                        <input type="checkbox" id="keepStorageCheckbox" checked
+                            class="mt-1 h-4 w-4 rounded border-gray-800 bg-gray-900 text-brand-500 focus:ring-brand-500 focus:ring-offset-gray-950">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-200 block">Keep storage intact</span>
+                            <span class="text-xs text-gray-500 block mt-0.5">Your files and folders remain on the server. All public share links will continue working.</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="flex space-x-3">
+                    <button onclick="closeDeactivateModal()"
+                        class="flex-1 py-2.5 px-4 bg-gray-900 hover:bg-gray-850 border border-gray-800 text-gray-300 font-semibold rounded-xl transition text-sm">
+                        Cancel
+                    </button>
+                    <button onclick="confirmDeactivateSpace()"
+                        class="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-semibold rounded-xl transition text-sm shadow-lg shadow-red-500/20">
+                        Deactivate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast"
+        class="fixed bottom-5 right-5 z-50 transform translate-y-10 opacity-0 transition-all duration-300 bg-gray-900 border border-gray-800 text-gray-200 px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 max-w-sm pointer-events-none">
+        <div id="toastIcon" class="text-brand-500"></div>
+        <p id="toastMessage" class="text-sm font-medium"></p>
+    </div>
+
+    <!-- Floating Batch Actions Bar -->
+    <div id="batchActionsBar"
+        class="fixed bottom-6 left-1/2 transform -translate-x-1/2 glass-panel border border-brand-500/30 px-6 py-4 rounded-2xl shadow-2xl z-40 flex items-center space-x-6 transition-all duration-300 translate-y-24 opacity-0 pointer-events-none">
+        <div class="text-sm font-semibold text-gray-200">
+            <span id="selectedCount" class="text-brand-400 font-bold">0</span> selected
+        </div>
+        <div class="h-6 w-px bg-gray-800"></div>
+
+        <div class="flex items-center space-x-3">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Move to:</span>
+            <select id="batchFolderSelect" onchange="handleBatchMove()"
+                class="bg-gray-900 text-gray-300 text-xs px-3 py-2 rounded-xl border border-gray-850 focus:outline-none">
+                <option value="" disabled selected>Select Folder...</option>
+                <option value="root">Root / Unorganized</option>
+                <!-- populated dynamically -->
+            </select>
+        </div>
+
+        <div class="h-6 w-px bg-gray-800"></div>
+        <button onclick="clearSelection()" class="text-xs text-gray-400 hover:text-white font-semibold transition">
+            Clear
         </button>
-      </div>
-    </div>
-
-    <!-- Loading indicator -->
-    <div id="loading" class="hidden text-center py-12">
-      <i class="fas fa-spinner fa-spin text-4xl text-blue-600"></i>
-      <p class="mt-2 text-gray-600">Loading assets...</p>
-    </div>
-
-    <!-- Empty state -->
-    <div id="empty-state" class="hidden text-center py-12 bg-white rounded-lg shadow">
-      <i class="fas fa-folder-open text-6xl text-gray-300 mb-4"></i>
-      <p class="text-gray-600 text-lg">No media assets uploaded yet.</p>
-      <a href="/upload" class="inline-block mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition">
-        Upload your first file
-      </a>
-    </div>
-
-    <!-- Gallery grid -->
-    <div id="gallery" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-    </div>
-
-    <!-- Pagination -->
-    <div id="pagination" class="mt-8 flex justify-center gap-2 hidden">
-    </div>
-  </main>
-
-  <!-- Copy URL Modal -->
-  <div id="url-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-      <h3 class="text-lg font-semibold mb-4">Public URL</h3>
-      <p id="url-filename" class="text-gray-600 text-sm mb-2"></p>
-      <div class="flex gap-2">
-        <input type="text" id="url-input" readonly class="flex-1 border rounded px-3 py-2 text-sm bg-gray-50">
-        <button onclick="copyUrl()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">
-          <i class="fas fa-copy"></i>
+        <button onclick="handleBatchDelete()"
+            class="py-1.5 px-3 bg-red-950/20 hover:bg-red-950/40 border border-red-900/50 hover:border-red-900 text-red-400 hover:text-red-300 text-xs font-semibold rounded-xl transition">
+            Delete Selected
         </button>
-      </div>
-      <button onclick="closeModal()" class="mt-4 w-full bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded transition">
-        Close
-      </button>
     </div>
-  </div>
 
-  <script>
-    let currentPage = 1;
-    let totalPages = 1;
-    let currentUrl = '';
+    <!-- Logic Script -->
+    <script>
+        let currentTab = 'gallery';
+        let currentFilter = 'all';
+        let searchQuery = '';
+        let assetsList = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        let selectedAssetForModal = null;
+        let currentFolderId = null;
+        let foldersList = [];
+        let draggedAssetId = null;
+        let viewMode = 'grid';
+        let selectedAssets = new Set();
 
-    async function loadAssets(page = 1) {
-      document.getElementById('loading').classList.remove('hidden');
-      document.getElementById('gallery').innerHTML = '';
-      document.getElementById('empty-state').classList.add('hidden');
-      document.getElementById('pagination').classList.add('hidden');
+        // Base API path
+        const API_BASE = window.location.origin + window.location.pathname.replace(/\/index\.html$/, '').replace(/\/$/, '');
 
-      try {
-        const response = await fetch(`api.php?page=${page}&limit=20`);
-        const text = await response.text();
-        
-        // Debug: log the raw response
-        console.log('Raw response:', text);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = text ? JSON.parse(text) : { success: false, data: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 1 } };
-
-        if (!result.success && result.error) throw new Error(result.error);
-
-        currentPage = result.pagination.page;
-        totalPages = result.pagination.totalPages;
-        const assets = result.data || [];
-
-        if (assets.length === 0) {
-          document.getElementById('loading').classList.add('hidden');
-          document.getElementById('empty-state').classList.remove('hidden');
-          return;
-        }
-
-        const gallery = document.getElementById('gallery');
-        assets.forEach(asset => {
-          const card = createAssetCard(asset);
-          gallery.appendChild(card);
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            setupDragAndDrop();
+            trackVisit();
         });
 
-        renderPagination();
-        document.getElementById('loading').classList.add('hidden');
-      } catch (error) {
-        console.error('Failed to load assets:', error);
-        alert('Failed to load assets');
-        document.getElementById('loading').classList.add('hidden');
-      }
-    }
-
-    function createAssetCard(asset) {
-      const card = document.createElement('div');
-      card.className = 'bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition';
-
-      const isImg = asset.mimeType.startsWith('image/');
-      const mediaEl = isImg
-        ? `<img src="${asset.publicUrl}" alt="${asset.originalFilename}" class="w-full h-48 object-cover">`
-        : `<video src="${asset.publicUrl}" class="w-full h-48 object-cover" controls preload="metadata"></video>`;
-
-      card.innerHTML = `
-        <div class="relative">
-          ${mediaEl}
-          <span class="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
-            ${isImg ? 'Image' : 'Video'}
-          </span>
-        </div>
-        <div class="p-4">
-          <h3 class="font-semibold text-gray-800 truncate" title="${asset.originalFilename}">${asset.originalFilename}</h3>
-          <p class="text-sm text-gray-500 mt-1">${formatBytes(asset.fileSize)}</p>
-          <div class="mt-3 flex gap-2">
-            <button onclick="showUrl('${asset.publicUrl}', '${asset.originalFilename}')" class="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-2 rounded text-sm transition">
-              <i class="fas fa-link"></i> Copy URL
-            </button>
-            <button onclick="deleteAsset('${asset.assetId}')" class="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded text-sm transition" title="Delete">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-        </div>
-      `;
-
-      return card;
-    }
-
-    function formatBytes(bytes) {
-      if (bytes === 0) return '0 B';
-      const k = 1024;
-      const sizes = ['B', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    function renderPagination() {
-      const container = document.getElementById('pagination');
-      container.innerHTML = '';
-
-      if (totalPages <= 1) return;
-
-      container.classList.remove('hidden');
-
-      for (let i = 1; i <= totalPages; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i;
-        btn.className = `px-3 py-2 rounded ${i === currentPage ? 'bg-blue-600 text-white' : 'bg-white hover:bg-gray-100'}`;
-        btn.onclick = () => loadAssets(i);
-        container.appendChild(btn);
-      }
-    }
-
-    function showUrl(url, filename) {
-      currentUrl = url;
-      document.getElementById('url-filename').textContent = filename;
-      document.getElementById('url-input').value = url;
-      document.getElementById('url-modal').classList.remove('hidden');
-    }
-
-    function copyUrl() {
-      navigator.clipboard.writeText(currentUrl).then(() => {
-        alert('URL copied to clipboard!');
-      }).catch(() => {
-        document.getElementById('url-input').select();
-        document.execCommand('copy');
-        alert('URL copied to clipboard!');
-      });
-    }
-
-    function closeModal() {
-      document.getElementById('url-modal').classList.add('hidden');
-    }
-
-    async function deleteAsset(assetId) {
-      if (!confirm('Are you sure you want to delete this asset?')) return;
-
-      try {
-        const response = await fetch(`api.php/${assetId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-        const result = await response.json();
-
-        if (!result.success && !response.ok) {
-          throw new Error(result.error || 'Failed to delete');
+        async function trackVisit() {
+            if (localStorage.getItem('custom_gateway_visit_logged') === 'true') {
+                return;
+            }
+            try {
+                const response = await fetch(`${API_BASE}/api/track`, { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    localStorage.setItem('custom_gateway_visit_logged', 'true');
+                }
+            } catch (err) {
+                console.error('Visit tracking failed:', err);
+            }
         }
 
-        alert('Asset deleted successfully');
-        loadAssets(currentPage);
-      } catch (error) {
-        console.error('Delete error:', error);
-        alert('Failed to delete asset');
-      }
-    }
+        // Auth management
+        function checkAuth() {
+            const email = localStorage.getItem('custom_gateway_email');
+            if (email && validateEmail(email)) {
+                document.getElementById('authView').classList.add('hidden');
+                document.getElementById('dashboardView').classList.remove('hidden');
+                document.getElementById('userEmailDisplay').textContent = email;
+                const mobEmail = document.getElementById('mobileUserEmail');
+                if (mobEmail) mobEmail.textContent = email;
+                loadDashboardData();
+            } else {
+                document.getElementById('authView').classList.remove('hidden');
+                document.getElementById('dashboardView').classList.add('hidden');
+            }
+        }
 
-    // Close modal on outside click
-    document.getElementById('url-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'url-modal') closeModal();
-    });
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            if (!validateEmail(email)) {
+                showToast('Please enter a valid email address.', 'error');
+                return;
+            }
 
-    // Initial load
-    loadAssets();
-  </script>
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    localStorage.setItem('custom_gateway_email', email);
+                    checkAuth();
+                    showToast('Successfully logged into workspace!', 'success');
+                } else {
+                    showToast(result.error || 'Login failed.', 'error');
+                }
+            } catch (err) {
+                showToast('API authentication connection failed.', 'error');
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('custom_gateway_email');
+            checkAuth();
+            showToast('Logged out of workspace.', 'info');
+        }
+
+        function openDeactivateModal() {
+            document.getElementById('deactivateModal').classList.remove('hidden');
+        }
+
+        function closeDeactivateModal() {
+            document.getElementById('deactivateModal').classList.add('hidden');
+        }
+
+        async function confirmDeactivateSpace() {
+            const keepStorage = document.getElementById('keepStorageCheckbox').checked;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/soft-delete`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
+                    body: JSON.stringify({ keep_storage: keepStorage })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    closeDeactivateModal();
+                    localStorage.removeItem('custom_gateway_email');
+                    checkAuth();
+                    showToast('Space deactivated successfully.', 'info');
+                } else {
+                    showToast(result.error || 'Deactivation failed.', 'error');
+                }
+            } catch (err) {
+                showToast('Failed to connect to API.', 'error');
+            }
+        }
+
+        function getAuthHeader() {
+            const email = localStorage.getItem('custom_gateway_email') || '';
+            return {
+                'Authorization': `Bearer ${btoa(email)}`,
+                'X-User-Email': email
+            };
+        }
+
+        let isMobileMenuOpen = false;
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const icon = document.getElementById('hamburgerIcon');
+            const email = localStorage.getItem('custom_gateway_email') || '';
+            document.getElementById('mobileUserEmail').textContent = email;
+
+            if (isMobileMenuOpen) {
+                menu.classList.add('-translate-y-full', 'opacity-0');
+                setTimeout(() => menu.classList.add('hidden'), 300);
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16m-7 6h7"></path>`;
+                isMobileMenuOpen = false;
+            } else {
+                menu.classList.remove('hidden');
+                setTimeout(() => menu.classList.remove('-translate-y-full', 'opacity-0'), 10);
+                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>`;
+                isMobileMenuOpen = true;
+            }
+        }
+
+        // Navigation Tabs
+        function switchTab(tab) {
+            currentTab = tab;
+            const galleryTab = document.getElementById('tab-gallery');
+            const uploadTab = document.getElementById('tab-upload');
+            const navGallery = document.getElementById('nav-gallery');
+            const navUpload = document.getElementById('nav-upload');
+            const mobileNavGallery = document.getElementById('mobile-nav-gallery');
+            const mobileNavUpload = document.getElementById('mobile-nav-upload');
+
+            if (tab === 'gallery') {
+                galleryTab.classList.remove('hidden');
+                uploadTab.classList.add('hidden');
+                navGallery.className = "px-4 py-2 rounded-lg text-brand-500 font-medium transition bg-brand-500/10";
+                navUpload.className = "px-4 py-2 rounded-lg text-gray-400 hover:text-gray-200 transition";
+
+                if (mobileNavGallery) mobileNavGallery.className = "px-4 py-3 rounded-xl text-brand-400 font-medium transition bg-brand-500/10";
+                if (mobileNavUpload) mobileNavUpload.className = "px-4 py-3 rounded-xl text-gray-400 hover:text-gray-200 transition";
+
+                loadDashboardData();
+            } else {
+                galleryTab.classList.add('hidden');
+                uploadTab.classList.remove('hidden');
+                navGallery.className = "px-4 py-2 rounded-lg text-gray-400 hover:text-gray-200 transition";
+                navUpload.className = "px-4 py-2 rounded-lg text-brand-500 font-medium transition bg-brand-500/10";
+
+                if (mobileNavGallery) mobileNavGallery.className = "px-4 py-3 rounded-xl text-gray-400 hover:text-gray-200 transition";
+                if (mobileNavUpload) mobileNavUpload.className = "px-4 py-3 rounded-xl text-brand-400 font-medium transition bg-brand-500/10";
+            }
+        }
+
+        // Dashboard Data Loading
+        async function loadDashboardData(page = 1, append = false) {
+            if (page === 1) {
+                document.getElementById('galleryLoading').classList.remove('hidden');
+                document.getElementById('galleryEmpty').classList.add('hidden');
+                if (!append) document.getElementById('galleryGrid').innerHTML = '';
+            }
+
+            try {
+                // Load folders list on the first page load
+                if (page === 1 && !append) {
+                    loadFolders();
+                }
+
+                const folderQuery = currentFolderId ? `&folderId=${currentFolderId}` : '&folderId=';
+                const response = await fetch(`${API_BASE}/api/assets?page=${page}&limit=24${folderQuery}`, {
+                    headers: getAuthHeader()
+                });
+
+                if (response.status === 401) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) throw new Error('Could not pull assets');
+                const result = await response.json();
+
+                const assets = result.data || [];
+                totalPages = result.pagination?.pages || 1;
+                currentPage = page;
+
+                if (append) {
+                    assetsList = [...assetsList, ...assets];
+                } else {
+                    assetsList = assets;
+                }
+
+                await updateStats();
+                renderGallery();
+
+                if (assetsList.length === 0) {
+                    document.getElementById('galleryEmpty').classList.remove('hidden');
+                }
+
+                const loadMoreBtn = document.getElementById('loadMoreContainer');
+                if (currentPage < totalPages) {
+                    loadMoreBtn.classList.remove('hidden');
+                } else {
+                    loadMoreBtn.classList.add('hidden');
+                }
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                document.getElementById('galleryLoading').classList.add('hidden');
+            }
+        }
+
+        function loadMore() {
+            loadDashboardData(currentPage + 1, true);
+        }
+
+        // Search & Filter
+        function handleSearch() {
+            searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+            renderGallery();
+        }
+
+        function filterType(type) {
+            currentFilter = type;
+            const buttons = document.querySelectorAll('#typeFilters button');
+            buttons.forEach(btn => {
+                if (btn.id === `filter-${type}`) {
+                    btn.className = "px-3.5 py-1.5 rounded-xl text-sm font-medium transition bg-brand-600 text-white";
+                } else {
+                    btn.className = "px-3.5 py-1.5 rounded-xl text-sm font-medium transition bg-gray-900 border border-gray-800 text-gray-400 hover:text-white";
+                }
+            });
+            renderGallery();
+        }
+
+        // Stats counter
+        // Stats counter
+        async function updateStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/assets/stats`, {
+                    headers: getAuthHeader()
+                });
+                if (!response.ok) throw new Error('Could not pull storage stats');
+                const result = await response.json();
+                if (!result.success) return;
+                
+                const stats = result.data;
+                const totalUsed = stats.totalSize;
+                
+                // Update workspace storage card
+                document.getElementById('storage-used-display').textContent = formatBytes(totalUsed);
+                document.getElementById('storage-percentage-badge').textContent = `Unlimited`;
+                
+                const getPercentOfTotal = (size) => {
+                    if (totalUsed === 0) return 0;
+                    return (size / totalUsed) * 100;
+                };
+
+                // Segment widths representing category portions relative to total used
+                document.getElementById('bar-image').style.width = `${getPercentOfTotal(stats.image.size)}%`;
+                document.getElementById('bar-video').style.width = `${getPercentOfTotal(stats.video.size)}%`;
+                document.getElementById('bar-document').style.width = `${getPercentOfTotal(stats.document.size)}%`;
+                document.getElementById('bar-archive').style.width = `${getPercentOfTotal(stats.archive.size)}%`;
+                document.getElementById('bar-audio').style.width = `${getPercentOfTotal(stats.audio.size)}%`;
+                document.getElementById('bar-other').style.width = `${getPercentOfTotal(stats.other.size)}%`;
+                
+                // Update overall / categories count
+                document.getElementById('stat-total').textContent = stats.totalCount;
+                document.getElementById('stat-images').textContent = stats.image.count;
+                document.getElementById('stat-videos').textContent = stats.video.count;
+                document.getElementById('stat-docs').textContent = stats.document.count;
+                document.getElementById('stat-archives').textContent = stats.archive.count;
+                document.getElementById('stat-audio').textContent = stats.audio.count;
+
+                // Update size and percentage labels
+                document.getElementById('stat-total-size').textContent = `${formatBytes(totalUsed)} (Total Size)`;
+                document.getElementById('stat-images-size').textContent = `${formatBytes(stats.image.size)} (${getPercentOfTotal(stats.image.size).toFixed(1)}% of total)`;
+                document.getElementById('stat-videos-size').textContent = `${formatBytes(stats.video.size)} (${getPercentOfTotal(stats.video.size).toFixed(1)}% of total)`;
+                document.getElementById('stat-docs-size').textContent = `${formatBytes(stats.document.size)} (${getPercentOfTotal(stats.document.size).toFixed(1)}% of total)`;
+                document.getElementById('stat-archives-size').textContent = `${formatBytes(stats.archive.size)} (${getPercentOfTotal(stats.archive.size).toFixed(1)}% of total)`;
+                document.getElementById('stat-audio-size').textContent = `${formatBytes(stats.audio.size)} (${getPercentOfTotal(stats.audio.size).toFixed(1)}% of total)`;
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
+        }
+
+        function isType(mime, category) {
+            if (category === 'image') return mime.startsWith('image/');
+            if (category === 'video') return mime.startsWith('video/');
+            if (category === 'audio') return mime.startsWith('audio/');
+            if (category === 'archive') {
+                return [
+                    'application/zip', 'application/x-zip-compressed', 'application/x-rar-compressed',
+                    'application/x-7z-compressed', 'application/x-tar', 'application/x-gzip'
+                ].includes(mime);
+            }
+            if (category === 'document') {
+                return [
+                    'application/pdf', 'text/csv', 'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'text/plain', 'application/vnd.ms-powerpoint',
+                    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                    'application/json', 'application/xml', 'text/html'
+                ].includes(mime);
+            }
+            return false;
+        }
+
+        // Render Gallery
+        function renderGallery() {
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '';
+
+            const filtered = assetsList.filter(asset => {
+                const matchesSearch = asset.originalFilename.toLowerCase().includes(searchQuery);
+                const matchesFilter = currentFilter === 'all' || isType(asset.mimeType, currentFilter);
+                return matchesSearch && matchesFilter;
+            });
+
+            if (filtered.length === 0) {
+                grid.className = "col-span-full py-12 text-center text-gray-500";
+                grid.innerHTML = `
+                    <div class="py-12 text-center text-gray-500">
+                        No matches found for your filter/search queries.
+                    </div>
+                `;
+                return;
+            }
+
+            if (viewMode === 'table') {
+                grid.className = "block w-full overflow-x-auto glass-panel border border-gray-800/80 rounded-2xl";
+
+                const allSelected = filtered.length > 0 && filtered.every(asset => selectedAssets.has(asset.assetId));
+
+                let tableHtml = `
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-800/80 text-gray-400 text-xs font-semibold uppercase tracking-wider bg-gray-950/40">
+                                <th class="py-4 px-4 w-12 text-center">
+                                    <input type="checkbox" ${allSelected ? 'checked' : ''} onchange="toggleAllSelection(event)" class="rounded border-gray-800 text-brand-600 focus:ring-brand-500 bg-gray-900 w-4 h-4 cursor-pointer">
+                                </th>
+                                <th class="py-4 px-4 w-16">Preview</th>
+                                <th class="py-4 px-4">Name</th>
+                                <th class="py-4 px-4 w-24">Size</th>
+                                <th class="py-4 px-4 w-32">Date</th>
+                                <th class="py-4 px-4 w-40 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-800/50">
+                `;
+
+                filtered.forEach(asset => {
+                    const cleanPublicUrl = cleanUrl(asset.publicUrl);
+                    const size = formatBytes(asset.fileSize);
+                    const date = new Date(asset.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                    const isSelected = selectedAssets.has(asset.assetId);
+
+                    let previewHtml = '';
+                    if (isType(asset.mimeType, 'image')) {
+                        previewHtml = `<img src="${cleanPublicUrl}" alt="" class="w-10 h-10 object-cover rounded-lg border border-gray-800">`;
+                    } else if (isType(asset.mimeType, 'video')) {
+                        previewHtml = `
+                            <div class="w-10 h-10 bg-gray-950 rounded-lg border border-gray-800 flex items-center justify-center text-gray-400">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
+                        `;
+                    } else {
+                        let docIcon = getDocIcon(asset.mimeType);
+                        previewHtml = `
+                            <div class="w-10 h-10 bg-gray-950/60 rounded-lg border border-gray-800 flex items-center justify-center">
+                                ${docIcon.replace('w-8 h-8', 'w-5 h-5')}
+                            </div>
+                        `;
+                    }
+
+                    tableHtml += `
+                        <tr onclick="openModal(${JSON.stringify(asset).replace(/"/g, '&quot;')})" 
+                            class="hover:bg-gray-800/25 cursor-pointer transition duration-150 ${isSelected ? 'bg-brand-500/5 border-l-2 border-brand-500' : ''}">
+                            <td class="py-3 px-4 text-center" onclick="event.stopPropagation()">
+                                <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleAssetSelection(event, '${asset.assetId}')" class="rounded border-gray-800 text-brand-600 focus:ring-brand-500 bg-gray-900 w-4 h-4 cursor-pointer">
+                            </td>
+                            <td class="py-3 px-4">${previewHtml}</td>
+                            <td class="py-3 px-4 font-semibold text-gray-200 truncate max-w-xs" title="${asset.originalFilename}">
+                                ${asset.originalFilename}
+                            </td>
+                            <td class="py-3 px-4 text-gray-400">${size}</td>
+                            <td class="py-3 px-4 text-gray-400">${date}</td>
+                            <td class="py-3 px-4 text-right" onclick="event.stopPropagation()">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <button onclick="copyDirectUrl('${cleanPublicUrl}')" class="py-1 px-2.5 bg-gray-900 border border-gray-800 hover:border-gray-700 text-xs font-semibold text-gray-300 rounded-lg hover:text-white transition">
+                                        Copy
+                                    </button>
+                                    <button onclick="openModal(${JSON.stringify(asset).replace(/"/g, '&quot;')})" class="py-1 px-2.5 bg-brand-600/10 border border-brand-500/20 hover:bg-brand-600 hover:border-brand-500 text-xs font-semibold text-brand-400 hover:text-white rounded-lg transition">
+                                        Details
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tableHtml += `
+                        </tbody>
+                    </table>
+                `;
+
+                grid.innerHTML = tableHtml;
+                return;
+            }
+
+            // Otherwise, render Grid View
+            grid.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6";
+
+            filtered.forEach(asset => {
+                const cleanPublicUrl = cleanUrl(asset.publicUrl);
+                const size = formatBytes(asset.fileSize);
+                const date = new Date(asset.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                const isSelected = selectedAssets.has(asset.assetId);
+
+                let previewElement = '';
+                if (isType(asset.mimeType, 'image')) {
+                    previewElement = `
+                        <div class="w-full h-40 bg-gray-950 relative overflow-hidden flex items-center justify-center">
+                            <img src="${cleanPublicUrl}" alt="${asset.originalFilename}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            <span class="absolute top-2 left-2 px-2 py-0.5 bg-purple-500/80 border border-purple-400/20 text-[10px] font-bold tracking-wider rounded text-white uppercase">IMAGE</span>
+                        </div>
+                    `;
+                } else if (isType(asset.mimeType, 'video')) {
+                    previewElement = `
+                        <div class="w-full h-40 bg-gray-950 relative overflow-hidden flex items-center justify-center">
+                            <video src="${cleanPublicUrl}" muted class="w-full h-full object-cover"></video>
+                            <div class="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/10 transition">
+                                <div class="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full border border-white/30 flex items-center justify-center text-white group-hover:scale-110 transition duration-200">
+                                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                </div>
+                            </div>
+                            <span class="absolute top-2 left-2 px-2 py-0.5 bg-blue-500/80 border border-blue-400/20 text-[10px] font-bold tracking-wider rounded text-white uppercase">VIDEO</span>
+                        </div>
+                    `;
+                } else {
+                    let docIcon = getDocIcon(asset.mimeType);
+                    let badgeColor = getDocBadgeColor(asset.mimeType);
+                    let typeLabel = getMimeLabel(asset.mimeType);
+
+                    previewElement = `
+                        <div class="w-full h-40 bg-gray-950/60 relative overflow-hidden flex flex-col items-center justify-center border-b border-gray-900">
+                            <div class="p-4 bg-gray-900 border border-gray-800 rounded-2xl mb-2 group-hover:scale-110 transition duration-300">
+                                ${docIcon}
+                            </div>
+                            <span class="absolute top-2 left-2 px-2 py-0.5 ${badgeColor} text-[10px] font-bold tracking-wider rounded text-white uppercase">${typeLabel}</span>
+                        </div>
+                    `;
+                }
+
+                const card = document.createElement('div');
+                card.className = `glass-card rounded-2xl overflow-hidden cursor-pointer group flex flex-col justify-between relative transition duration-200 ${isSelected ? 'ring-2 ring-brand-500 bg-brand-500/5' : ''
+                    }`;
+                card.draggable = true;
+                card.addEventListener('dragstart', (e) => handleAssetDragStart(e, asset.assetId));
+                card.onclick = () => openModal(asset);
+                card.innerHTML = `
+                    <div class="absolute top-3 right-3 z-10" onclick="event.stopPropagation()">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleAssetSelection(event, '${asset.assetId}')" class="rounded border-gray-800 text-brand-600 focus:ring-brand-500 bg-gray-900 w-4 h-4 cursor-pointer shadow">
+                    </div>
+                    <div>
+                        ${previewElement}
+                        <div class="p-4">
+                            <h4 class="font-semibold text-sm text-gray-200 truncate group-hover:text-white transition" title="${asset.originalFilename}">${asset.originalFilename}</h4>
+                            <p class="text-xs text-gray-500 mt-1">${size} • ${date}</p>
+                        </div>
+                    </div>
+                    <div class="px-4 pb-4 pt-1 flex space-x-2">
+                        <button onclick="event.stopPropagation(); copyDirectUrl('${cleanPublicUrl}')" class="flex-1 py-1.5 bg-gray-900 border border-gray-800 hover:border-gray-700 text-[11px] font-semibold text-gray-300 rounded-lg hover:text-white transition">
+                            Copy Link
+                        </button>
+                        <button onclick="event.stopPropagation(); openModal(${JSON.stringify(asset).replace(/"/g, '&quot;')})" class="py-1.5 px-3 bg-brand-600/10 border border-brand-500/20 hover:bg-brand-600 hover:border-brand-500 text-[11px] font-semibold text-brand-400 hover:text-white rounded-lg transition">
+                            Details
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Toggle Grid/Table View
+        function toggleViewMode() {
+            viewMode = (viewMode === 'grid') ? 'table' : 'grid';
+
+            const viewGridIcon = document.getElementById('viewGridIcon');
+            const viewTableIcon = document.getElementById('viewTableIcon');
+
+            if (viewMode === 'grid') {
+                viewGridIcon.classList.add('hidden');
+                viewTableIcon.classList.remove('hidden');
+            } else {
+                viewGridIcon.classList.remove('hidden');
+                viewTableIcon.classList.add('hidden');
+            }
+
+            renderGallery();
+        }
+
+        // Selection Handlers
+        function toggleAssetSelection(e, assetId) {
+            e.stopPropagation();
+            if (selectedAssets.has(assetId)) {
+                selectedAssets.delete(assetId);
+            } else {
+                selectedAssets.add(assetId);
+            }
+            renderGallery();
+            updateBatchActionBar();
+        }
+
+        function toggleAllSelection(e) {
+            e.stopPropagation();
+            const checked = e.target.checked;
+
+            // Get visible assets
+            const filtered = assetsList.filter(asset => {
+                const matchesSearch = asset.originalFilename.toLowerCase().includes(searchQuery);
+                const matchesFilter = currentFilter === 'all' || isType(asset.mimeType, currentFilter);
+                return matchesSearch && matchesFilter;
+            });
+
+            filtered.forEach(asset => {
+                if (checked) {
+                    selectedAssets.add(asset.assetId);
+                } else {
+                    selectedAssets.delete(asset.assetId);
+                }
+            });
+
+            renderGallery();
+            updateBatchActionBar();
+        }
+
+        function clearSelection() {
+            selectedAssets.clear();
+            renderGallery();
+            updateBatchActionBar();
+        }
+
+        function updateBatchActionBar() {
+            const bar = document.getElementById('batchActionsBar');
+            const countSpan = document.getElementById('selectedCount');
+            const select = document.getElementById('batchFolderSelect');
+
+            if (!bar || !countSpan) return;
+
+            const count = selectedAssets.size;
+            countSpan.textContent = count;
+
+            if (count > 0) {
+                bar.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+
+                // Keep dropdown selection clean
+                if (select) {
+                    select.value = "";
+                }
+            } else {
+                bar.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+            }
+        }
+
+        // Batch API Actions
+        async function handleBatchMove() {
+            const select = document.getElementById('batchFolderSelect');
+            if (!select) return;
+
+            const targetFolderId = select.value === 'root' ? null : select.value;
+            if (selectedAssets.size === 0) return;
+
+            const assetIds = Array.from(selectedAssets);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/assets/move`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
+                    body: JSON.stringify({
+                        assetIds,
+                        folderId: targetFolderId
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showToast(result.message || 'Assets moved successfully', 'success');
+                    clearSelection();
+                    loadDashboardData();
+                } else {
+                    showToast(result.error || 'Failed to move assets', 'error');
+                }
+            } catch (err) {
+                showToast('Failed to connect to API', 'error');
+            }
+        }
+
+        async function handleBatchDelete() {
+            if (selectedAssets.size === 0) return;
+
+            const count = selectedAssets.size;
+            if (!confirm(`Are you sure you want to permanently delete the ${count} selected assets? This action cannot be undone.`)) {
+                return;
+            }
+
+            const assetIds = Array.from(selectedAssets);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/assets`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
+                    body: JSON.stringify({ assetIds })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showToast(result.message || 'Assets deleted successfully', 'success');
+                    clearSelection();
+                    loadDashboardData();
+                } else {
+                    showToast(result.error || 'Failed to delete assets', 'error');
+                }
+            } catch (err) {
+                showToast('Failed to connect to API', 'error');
+            }
+        }
+
+
+        // Doc Helper Icons & Badges
+        function getDocIcon(mime) {
+            const baseIconClass = "w-8 h-8";
+            if (mime === 'application/pdf') {
+                return `<svg class="${baseIconClass} text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>`;
+            }
+            if (mime.includes('spreadsheet') || mime.includes('excel') || mime === 'text/csv') {
+                return `<svg class="${baseIconClass} text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
+            }
+            if (mime.includes('presentation') || mime.includes('powerpoint')) {
+                return `<svg class="${baseIconClass} text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21h8M12 3v18"></path></svg>`;
+            }
+            if (mime.includes('zip') || mime.includes('rar') || mime.includes('7z') || mime.includes('tar') || mime.includes('gzip')) {
+                return `<svg class="${baseIconClass} text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>`;
+            }
+            if (mime.startsWith('audio/')) {
+                return `<svg class="${baseIconClass} text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>`;
+            }
+            return `<svg class="${baseIconClass} text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
+        }
+
+        function getDocBadgeColor(mime) {
+            if (mime === 'application/pdf') return 'bg-red-500/80 border-red-500/20';
+            if (mime.includes('spreadsheet') || mime.includes('excel') || mime === 'text/csv') return 'bg-emerald-500/80 border-emerald-500/20';
+            if (mime.includes('presentation') || mime.includes('powerpoint')) return 'bg-yellow-500/80 border-yellow-500/20';
+            if (mime.includes('zip') || mime.includes('rar') || mime.includes('7z') || mime.includes('tar') || mime.includes('gzip')) return 'bg-amber-500/80 border-amber-500/20';
+            if (mime.startsWith('audio/')) return 'bg-pink-500/80 border-pink-500/20';
+            return 'bg-gray-500/80 border-gray-500/20';
+        }
+
+        function getMimeLabel(mime) {
+            if (mime === 'application/pdf') return 'PDF';
+            if (mime === 'text/csv') return 'CSV';
+            if (mime.includes('excel') || mime.includes('spreadsheet')) return 'Spreadsheet';
+            if (mime.includes('powerpoint') || mime.includes('presentation')) return 'Presentation';
+            if (mime.includes('zip') || mime.includes('compressed') || mime.includes('archive')) return 'Archive';
+            if (mime.startsWith('audio/')) return 'Audio';
+            return 'Document';
+        }
+
+        // Modal details
+        function openModal(asset) {
+            selectedAssetForModal = asset;
+            const cleanPublicUrl = cleanUrl(asset.publicUrl);
+
+            document.getElementById('modalTitle').textContent = asset.originalFilename;
+            document.getElementById('infoFilenameInput').value = asset.originalFilename;
+            document.getElementById('infoSize').textContent = formatBytes(asset.fileSize);
+            document.getElementById('infoMime').textContent = asset.mimeType;
+            document.getElementById('infoDate').textContent = new Date(asset.createdAt).toLocaleString();
+            document.getElementById('infoId').textContent = asset.assetId;
+
+            const folderSelect = document.getElementById('modalFolderSelect');
+            if (folderSelect) {
+                folderSelect.value = asset.folderId || '';
+            }
+
+            document.getElementById('infoUrl').value = cleanPublicUrl;
+            document.getElementById('modalDownloadBtn').href = cleanPublicUrl;
+
+            // Generate Preview inside Modal
+            const previewBox = document.getElementById('modalPreview');
+            previewBox.innerHTML = '';
+
+            if (isType(asset.mimeType, 'image')) {
+                previewBox.innerHTML = `<img src="${cleanPublicUrl}" alt="${asset.originalFilename}" class="max-h-[300px] object-contain rounded-lg">`;
+            } else if (isType(asset.mimeType, 'video')) {
+                previewBox.innerHTML = `<video src="${cleanPublicUrl}" controls class="w-full max-h-[300px] rounded-lg"></video>`;
+            } else if (isType(asset.mimeType, 'audio')) {
+                previewBox.innerHTML = `
+                    <div class="text-center w-full max-w-sm">
+                        <div class="inline-flex p-4 bg-brand-500/10 rounded-2xl mb-4 text-brand-500 border border-brand-500/20 animate-pulse">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+                        </div>
+                        <audio src="${cleanPublicUrl}" controls class="w-full"></audio>
+                    </div>
+                `;
+            } else {
+                let bigIcon = getDocIcon(asset.mimeType).replace('w-8 h-8', 'w-16 h-16');
+                previewBox.innerHTML = `
+                    <div class="text-center">
+                        <div class="mb-4 inline-block">${bigIcon}</div>
+                        <p class="text-sm font-semibold text-gray-300">${getMimeLabel(asset.mimeType)}</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            document.getElementById('modalPreview').innerHTML = ''; // Stop video/audio playback
+            selectedAssetForModal = null;
+        }
+
+        // Close on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Close on clicking backdrop
+        document.getElementById('detailModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('detailModal')) closeModal();
+        });
+
+        async function triggerDeleteAsset() {
+            if (!selectedAssetForModal) return;
+            const filename = selectedAssetForModal.originalFilename;
+            const assetId = selectedAssetForModal.assetId;
+
+            if (!confirm(`Permanently delete "${filename}"? This action cannot be reversed.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/assets/${assetId}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeader()
+                });
+
+                if (!response.ok) {
+                    const result = await response.json();
+                    throw new Error(result.error || 'Failed to delete file');
+                }
+
+                closeModal();
+                showToast(`Successfully deleted "${filename}"`, 'success');
+                loadDashboardData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Direct copy buttons
+        function copyDirectUrl(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Copied direct link to clipboard!', 'success');
+            }).catch(() => {
+                showToast('Failed to copy. Try selecting manually.', 'error');
+            });
+        }
+
+        function copyModalUrl() {
+            const urlInput = document.getElementById('infoUrl');
+            urlInput.select();
+            navigator.clipboard.writeText(urlInput.value).then(() => {
+                const copyBtn = document.getElementById('modalCopyBtn');
+                copyBtn.textContent = 'Copied!';
+                copyBtn.className = "bg-emerald-600 text-white text-xs px-4 rounded-r-xl font-semibold transition";
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.className = "bg-brand-600 hover:bg-brand-500 text-white text-xs px-4 rounded-r-xl font-semibold transition";
+                }, 2000);
+            });
+        }
+
+        // Drag & Drop Upload
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+            if (!dropZone) return;
+
+            dropZone.addEventListener('click', () => document.getElementById('fileInput').click());
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('drop-zone-active');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('drop-zone-active');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    handleFilesUpload(files);
+                }
+            });
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                handleFilesUpload(files);
+            }
+        }
+
+        const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
+        const uploadQueue = {};
+
+        function handleFilesUpload(files) {
+            Array.from(files).forEach(file => {
+                uploadSingleFile(file);
+            });
+        }
+
+        // Generate a safe unique string identifier for a file
+        function getFileId(file) {
+            const cleanName = file.name.replace(/[^a-zA-Z0-9]/g, '');
+            return `file${cleanName}${file.size}${file.lastModified}`;
+        }
+
+        function uploadSingleFile(file, existingRowId = null) {
+            const list = document.getElementById('uploadList');
+            const fileId = getFileId(file);
+            const rowId = existingRowId || ('upload-row-' + Math.random().toString(36).substr(2, 9));
+            
+            // Store file reference in case of retry/resume
+            uploadQueue[rowId] = file;
+
+            let item = document.getElementById(rowId);
+            if (!item) {
+                // Create progress row item
+                item = document.createElement('div');
+                item.id = rowId;
+                item.className = "glass-panel p-4 rounded-xl border border-gray-800 flex flex-col space-y-2";
+                list.prepend(item);
+            }
+            
+            // Reset to preparing/uploading state
+            item.innerHTML = `
+                <div class="flex justify-between items-center text-sm">
+                    <span class="font-medium text-gray-200 truncate max-w-xs">${file.name}</span>
+                    <span class="text-xs text-gray-500" id="${rowId}-percent">0%</span>
+                </div>
+                <div class="w-full bg-gray-950 h-2 rounded-full overflow-hidden">
+                    <div id="${rowId}-bar" class="bg-brand-500 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between items-center text-xs text-gray-500">
+                    <span>${formatBytes(file.size)}</span>
+                    <span id="${rowId}-status" class="text-gray-500">Preparing...</span>
+                </div>
+            `;
+
+            // Step 1: Check upload status on the server
+            fetch(`${API_BASE}/api/assets/upload-status?fileId=${fileId}&t=${Date.now()}`, {
+                headers: getAuthHeader()
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const offset = data.uploadedBytes || 0;
+                    uploadChunks(file, fileId, rowId, offset, currentFolderId);
+                } else {
+                    throw new Error(data.error || 'Failed to get upload status');
+                }
+            })
+            .catch(err => {
+                handleUploadFail(rowId, err.message);
+            });
+        }
+
+        function uploadChunks(file, fileId, rowId, offset, folderId) {
+            if (offset >= file.size) {
+                document.getElementById(`${rowId}-bar`).style.width = '100%';
+                document.getElementById(`${rowId}-percent`).textContent = '100%';
+                document.getElementById(`${rowId}-status`).textContent = "Verifying upload...";
+            }
+
+            const chunk = file.slice(offset, Math.min(offset + CHUNK_SIZE, file.size));
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `${API_BASE}/api/assets/upload-chunk`, true);
+            
+            // Set Headers
+            const headers = getAuthHeader();
+            Object.keys(headers).forEach(key => {
+                xhr.setRequestHeader(key, headers[key]);
+            });
+            
+            xhr.setRequestHeader('X-File-Id', fileId);
+            xhr.setRequestHeader('X-File-Name', encodeURIComponent(file.name));
+            xhr.setRequestHeader('X-File-Size', file.size.toString());
+            xhr.setRequestHeader('X-Chunk-Offset', offset.toString());
+            if (folderId) {
+                xhr.setRequestHeader('X-Folder-Id', folderId);
+            }
+
+            // Track progress of the CURRENT chunk
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const loadedTotal = offset + e.loaded;
+                    const percent = Math.round((loadedTotal / file.size) * 100);
+                    document.getElementById(`${rowId}-bar`).style.width = percent + '%';
+                    document.getElementById(`${rowId}-percent`).textContent = percent + '%';
+                    document.getElementById(`${rowId}-status`).textContent = `Uploading... (${formatBytes(loadedTotal)} / ${formatBytes(file.size)})`;
+                }
+            });
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        if (res.success) {
+                            if (res.completed) {
+                                // Finalized successfully!
+                                document.getElementById(`${rowId}-bar`).className = "bg-emerald-500 h-full rounded-full";
+                                document.getElementById(`${rowId}-percent`).className = "text-xs text-emerald-400";
+                                document.getElementById(`${rowId}-percent`).textContent = '100%';
+                                document.getElementById(`${rowId}-status`).innerHTML = `Uploaded! Link: <a href="${cleanUrl(res.data.publicUrl)}" target="_blank" class="text-brand-400 hover:underline font-mono">${cleanUrl(res.data.publicUrl)}</a>`;
+                                document.getElementById(`${rowId}-status`).className = "text-emerald-400 text-xs mt-1 block truncate";
+                                showToast(`Uploaded ${file.name} successfully!`, 'success');
+                                
+                                // Clean up file reference
+                                delete uploadQueue[rowId];
+                                
+                                // Refresh gallery view
+                                loadDashboardData();
+                            } else {
+                                // Upload next chunk
+                                const nextOffset = res.uploadedBytes;
+                                uploadChunks(file, fileId, rowId, nextOffset, folderId);
+                            }
+                        } else {
+                            throw new Error(res.error || 'Chunk upload failed');
+                        }
+                    } catch (err) {
+                        handleUploadFail(rowId, err.message);
+                    }
+                } else {
+                    handleUploadFail(rowId, `Error code ${xhr.status}`);
+                }
+            };
+
+            xhr.onerror = function () {
+                handleUploadFail(rowId, 'Network error');
+            };
+
+            xhr.send(chunk);
+        }
+
+        function handleUploadFail(rowId, errorMsg) {
+            document.getElementById(`${rowId}-bar`).className = "bg-red-500 h-full rounded-full";
+            document.getElementById(`${rowId}-percent`).className = "text-xs text-red-400";
+            
+            const statusContainer = document.getElementById(`${rowId}-status`);
+            statusContainer.className = "text-red-400 flex items-center justify-between w-full mt-1 text-xs";
+            statusContainer.innerHTML = `
+                <span class="truncate pr-2">Failed: ${errorMsg}</span>
+                <button onclick="retryUpload('${rowId}')" class="px-2 py-0.5 bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:border-red-500 text-red-400 hover:text-white rounded text-[10px] font-bold transition">
+                    Resume
+                </button>
+            `;
+            
+            showToast(`Upload failed: ${errorMsg}`, 'error');
+        }
+
+        function retryUpload(rowId) {
+            const file = uploadQueue[rowId];
+            if (file) {
+                uploadSingleFile(file, rowId);
+            } else {
+                showToast("File reference lost. Please re-select the file.", "error");
+            }
+        }
+
+        // Toast Messages
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMessage.textContent = message;
+
+            if (type === 'success') {
+                toastIcon.innerHTML = `<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+            } else if (type === 'error') {
+                toastIcon.innerHTML = `<svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+            } else {
+                toastIcon.innerHTML = `<svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            }
+
+            toast.classList.remove('translate-y-10', 'opacity-0');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+            }, 3000);
+        }
+
+        // Folders Feature Logic
+        async function loadFolders() {
+            try {
+                const response = await fetch(`${API_BASE}/api/folders`, {
+                    headers: getAuthHeader()
+                });
+                if (!response.ok) throw new Error('Failed to load folders');
+
+                const result = await response.json();
+                foldersList = result.data || [];
+
+                renderFolders();
+                updateFolderDropdowns();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function renderFolders() {
+            const container = document.getElementById('foldersContainer');
+            const grid = document.getElementById('foldersGrid');
+            grid.innerHTML = '';
+
+            if (foldersList.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+
+            foldersList.forEach(folder => {
+                const isSelected = currentFolderId === folder.folderId;
+                const card = document.createElement('div');
+                card.className = `glass-card p-4 rounded-xl border flex flex-col justify-between cursor-pointer group transition-all duration-200 ${isSelected ? 'border-brand-500 bg-brand-500/10' : 'border-gray-800'
+                    }`;
+                card.onclick = () => navigateToFolder(folder.folderId, folder.name);
+
+                // Set up HTML5 drag & drop handlers
+                card.draggable = false;
+                card.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    card.classList.add('border-brand-400', 'bg-brand-500/5');
+                });
+                card.addEventListener('dragleave', () => {
+                    card.classList.remove('border-brand-400', 'bg-brand-500/5');
+                });
+                card.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    card.classList.remove('border-brand-400', 'bg-brand-500/5');
+                    handleAssetDrop(e, folder.folderId);
+                });
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2.5 bg-brand-500/10 border border-brand-500/20 text-brand-500 rounded-xl group-hover:scale-105 transition duration-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-200 truncate group-hover:text-white transition" title="${folder.name}">${folder.name}</span>
+                    </div>
+                    <div class="mt-3 flex justify-end">
+                        <button onclick="event.stopPropagation(); deleteFolder('${folder.folderId}', '${folder.name}')" 
+                            class="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition duration-150" 
+                            title="Delete Folder">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function updateFolderDropdowns() {
+            const select = document.getElementById('modalFolderSelect');
+            const batchSelect = document.getElementById('batchFolderSelect');
+
+            if (select) {
+                select.innerHTML = '<option value="">Root / Unorganized</option>';
+                foldersList.forEach(folder => {
+                    const opt = document.createElement('option');
+                    opt.value = folder.folderId;
+                    opt.textContent = folder.name;
+                    select.appendChild(opt);
+                });
+            }
+
+            if (batchSelect) {
+                batchSelect.innerHTML = `
+                    <option value="" disabled selected>Move to...</option>
+                    <option value="root">Root / Unorganized</option>
+                `;
+                foldersList.forEach(folder => {
+                    const opt = document.createElement('option');
+                    opt.value = folder.folderId;
+                    opt.textContent = folder.name;
+                    batchSelect.appendChild(opt);
+                });
+            }
+        }
+
+        async function promptCreateFolder() {
+            const name = prompt('Enter a name for the new folder:');
+            if (!name || name.trim() === '') return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/folders`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
+                    body: JSON.stringify({ name: name.trim() })
+                });
+
+                if (!response.ok) {
+                    const result = await response.json();
+                    throw new Error(result.error || 'Failed to create folder');
+                }
+
+                showToast(`Created folder "${name}"`, 'success');
+                loadFolders();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function deleteFolder(folderId, folderName) {
+            if (!confirm(`Are you sure you want to delete the folder "${folderName}"?\nAny files inside this folder will be moved back to the root level. Your file paths and URLs will not be changed.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/folders/${folderId}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeader()
+                });
+
+                if (!response.ok) {
+                    const result = await response.json();
+                    throw new Error(result.error || 'Failed to delete folder');
+                }
+
+                showToast(`Deleted folder "${folderName}". Files moved to root.`, 'success');
+                if (currentFolderId === folderId) {
+                    navigateToFolder(null);
+                } else {
+                    loadFolders();
+                    loadDashboardData();
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function navigateToFolder(folderId, folderName = null) {
+            currentFolderId = folderId;
+
+            const separator = document.getElementById('breadcrumbSeparator');
+            const breadcrumbFolder = document.getElementById('breadcrumbFolder');
+
+            if (folderId) {
+                separator.classList.remove('hidden');
+                breadcrumbFolder.classList.remove('hidden');
+                breadcrumbFolder.textContent = folderName;
+            } else {
+                separator.classList.add('hidden');
+                breadcrumbFolder.classList.add('hidden');
+            }
+
+            loadDashboardData(1);
+        }
+
+        async function moveAsset(assetId, folderId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/assets/${assetId}/move`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
+                    body: JSON.stringify({ folderId: folderId })
+                });
+
+                if (!response.ok) {
+                    const result = await response.json();
+                    throw new Error(result.error || 'Failed to move file');
+                }
+
+                showToast('Asset moved successfully', 'success');
+                loadDashboardData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function moveAssetFromModal() {
+            if (!selectedAssetForModal) return;
+            const folderSelect = document.getElementById('modalFolderSelect');
+            const targetFolderId = folderSelect.value || null;
+
+            await moveAsset(selectedAssetForModal.assetId, targetFolderId);
+            selectedAssetForModal.folderId = targetFolderId;
+        }
+
+        async function renameAssetFromModal() {
+            if (!selectedAssetForModal) return;
+            const input = document.getElementById('infoFilenameInput');
+            const newName = input ? input.value.trim() : '';
+
+            if (newName === '') {
+                showToast('Filename cannot be empty', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/assets/${selectedAssetForModal.assetId}/rename`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
+                    body: JSON.stringify({ filename: newName })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Asset renamed successfully', 'success');
+                    selectedAssetForModal.originalFilename = newName;
+                    document.getElementById('modalTitle').textContent = newName;
+                    loadDashboardData();
+                } else {
+                    showToast(result.error || 'Failed to rename asset', 'error');
+                }
+            } catch (err) {
+                showToast('Failed to connect to API', 'error');
+            }
+        }
+
+        // HTML5 Drag and Drop Handlers
+        function handleAssetDragStart(e, assetId) {
+            draggedAssetId = assetId;
+            e.dataTransfer.setData('text/plain', assetId);
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        async function handleAssetDrop(e, folderId) {
+            e.preventDefault();
+            const assetId = e.dataTransfer.getData('text/plain') || draggedAssetId;
+            if (assetId) {
+                await moveAsset(assetId, folderId);
+            }
+            draggedAssetId = null;
+        }
+
+        // Utils
+        function cleanUrl(url) {
+            if (!url) return url;
+            // Fix legacy database entries that were saved with broken 'http:/' or 'https:/' protocol slashes
+            if (url.startsWith('http:/') && !url.startsWith('http://')) {
+                return url.replace('http:/', 'http://');
+            }
+            if (url.startsWith('https:/') && !url.startsWith('https://')) {
+                return url.replace('https:/', 'https://');
+            }
+            return url;
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function formatBytes(bytes, precision = 2) {
+            const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            bytes = Math.max(bytes, 0);
+            const pow = Math.floor((bytes ? Math.log(bytes) : 0) / Math.log(1024));
+            const powIndex = Math.min(pow, units.length - 1);
+            bytes /= Math.pow(1024, powIndex);
+            return bytes.toFixed(precision) + ' ' + units[powIndex];
+        }
+    </script>
 </body>
+
 </html>
